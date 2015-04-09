@@ -1,0 +1,149 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 0.7em;
+	color: #000;
+	background: #ededed url(../images/menu_body.gif) top left repeat-y;
+}
+
+img {
+	border: 0;
+}
+
+ul {
+	list-style-type: none;
+}
+
+#menu {
+	width: 199px;
+}
+
+#menu h2 {
+	position: relative;
+	padding: 0 5px;
+	height: 26px;
+	color: #ef9f1b;
+	background: #ededed url(../images/menu_bar.gif) top left repeat-x;
+	border-bottom: 1px solid #fff;
+	line-height: 26px;
+	font-size: 1em;
+}
+
+#menu h2 img {
+	position: absolute;
+	top: 9px;
+	right: 8px;
+}
+
+#menu ul li {
+	padding: 0 10px;
+	border-bottom: 1px solid #fff;
+}
+
+
+#menu ul li a {
+	padding-left: 12px;
+	background: url(../images/menu_li1.gif) 0 0.35em no-repeat;
+}
+
+#menu ul li a:link, #menu ul li a:active, #menu ul li a:visited {
+	color: #6e7475;
+	text-decoration: none;
+}
+
+#menu ul li a:hover {
+	background: url(../images/menu_li2.gif) 0 0.35em no-repeat;
+	color: #000;
+}
+
+#menu ul li.menuli_style1 {
+	background-color: #ededed;
+}
+
+#menu ul li.menuli_style2 {
+	background-color: #e9e9e9;
+}
+
+#menu a.flag {
+	padding-left: 12px;
+	background: url(../images/menu_blank.gif) 0 0.35em no-repeat;
+}
+
+#menu div.flag {
+	padding: 0 10px;
+	height: 26px;
+	line-height: 26px;
+	color: #6e7475;
+}
+
+#menu ul li.menuli_style3 {
+	background-color: #e9e9e9;
+	color: #6e7475;
+	text-decoration: none;
+	padding-left: 20px;
+}
+
+/* Styles for autocomplete */
+
+li.ui-autocomplete-category {
+	padding: 3px 0px 0px 5px;
+	height: 18px;
+	background: #ededed url(../images/menu_cat_gray.png) top left repeat-x;
+	font-size: 11px;
+	/* font-weight: bold; */
+}
+
+/* IE hack (as usual) */
+html>body li.ui-autocomplete-category {
+	vertical-align: center;
+	height: auto;
+	min-height: 18px;
+}
+
+li.ui-menu-item {
+	text-align: left;
+	font-size: 10px;
+	border-bottom: 1px solid white;
+	padding: 0 0 0 2px;
+	color: #000;
+	background: #e8e8e8;
+}
+
+ul.ui-autocomplete {
+	width: 150px;
+	position: absolute;
+	border-width: 2px;
+	/* disabled shadow
+	box-shadow: 0px 8px 16px 0px #666666;
+	-webkit-box-shadow: 0px 8px 16px 0px #666666;
+	-moz-box-shadow: 0px 8px 16px 0px #666666;
+	*/
+}
+
+.statusgroup {
+	border-left: 8px solid #8A8A8A;
+}
+
+.statusOK, .statusUP, .statusRECOVERY {
+	border-left: 8px solid #00cc33;
+}
+
+.statusCRITICAL, .statusDOWN {
+	border-left: 8px solid #ff5252;
+}
+
+.statusWARNING {
+	border-left: 8px solid #ffb533;
+}
+
+.statusUNKNOWN, .statusUNREACHABLE {
+	border-left: 8px solid #db54fd;
+}
+
+.statusPENDING {
+	border-left: 8px solid #73cce3;
+}
