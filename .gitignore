@@ -1,0 +1,13 @@
+# misc
+.idea
+notes.ini
+
+# nagios/icinga
+ido2db.cfg
+resource.cfg
+htpasswd.users
+apache2.conf
+stylesheets
+
+# automated validation
+checkresults
