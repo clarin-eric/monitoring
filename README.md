@@ -1,4 +1,5 @@
 # monitoring
+[![Build Status](https://travis-ci.org/clarin-eric/monitoring.svg?branch=master)](https://travis-ci.org/clarin-eric/monitoring)
 Monitoring configuration for networked CLARIN services and applications.
 
 !!! Attention!!!
