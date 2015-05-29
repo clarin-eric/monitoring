@@ -14,9 +14,7 @@ before_script:
 script: /usr/sbin/icinga -v icinga.cfg
 
 notifications:
-  webhooks:
-    urls:
-      - http://clarin.fz-juelich.de:7010/hook/
+  webhooks: http://clarin.fz-juelich.de:7010/hook/
     on_success: always
-    on_failure: always
+    on_failure: never
     on_start: never
