@@ -5,7 +5,7 @@ import logging
 
 CONFIG = None
 
-def _get_config(section='centerregistry'):
+def _get_config(section='default'):
     global CONFIG
     config = ConfigParser.SafeConfigParser()
     config.read('config.ini')
@@ -43,7 +43,20 @@ def _decrypt_contacts():
             logging.debug('Writing Contact %s', contact)
             contact.save()
 
+
+def _manipulate_cgi_admins():
+    f = open('cgi.cfg', 'r')
+    content = f.read()
+    f.close()
+    content = content.replace('CLARINADMINS', CONFIG['clarinadmins'])
+    f = open('cgi.cfg', 'w')
+    f.write(content)
+    f.close()
+
+
 if __name__ == '__main__':
     _get_config()
+    print CONFIG
     _load_icinga_config()
     _decrypt_contacts()
+    _manipulate_cgi_admins()

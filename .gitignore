@@ -1,7 +1,6 @@
 # misc
 .idea
-cgi_config.ini
-cgi_config.ini
+config.ini
 
 # nagios/icinga
 ido2db.cfg
