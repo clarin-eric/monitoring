@@ -15,7 +15,7 @@ app = Flask(__name__)
 def _calculate_hash(config):
     return sha256('{}/{}{}'.format(config['travis_user'],
                                    config['travis_repo'],
-                                   config['travis_token']).hexdigest())
+                                   config['travis_token'].hexdigest()))
 
 
 def _compare(token, auth_header):
