@@ -5,11 +5,13 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y icinga-core
 
+install:
+  - pip install -r config_generation/requirements.txt && pip install -r config_generation/testing_requirements.txt
+
 before_script:
   - mkdir -p lib/spool lib/rw run/icinga cache/icinga lib/icinga/spool/checkresults lib/icinga/rw log/icinga
   - sed -i "s/\/var\///g" icinga.cfg
   - echo -e '$USER1$=/usr/lib/icinga/plugins\n$USER3$=/etc/icinga/probes' > resource.cfg
-  - pip install -r config_generation/requirements.txt && pip install -r config_generation/testing_requirements.txt
 
 script:
  - /usr/sbin/icinga -v icinga.cfg
