@@ -16,9 +16,9 @@ before_script:
 script:
  - /usr/sbin/icinga -v icinga.cfg
  - find . -name "*.py" -exec pep8 {} \;
- - nosetests --with-coverage --cover-package=config_generation,.
- - radon mi config_generation .
- - radon cc config_generation .
+ - nosetests --with-coverage --cover-package=config_generation,webhook,.
+ - radon mi config_generation webhook .
+ - radon cc config_generation webhook .
 
 notifications:
   webhooks: http://clarin.fz-juelich.de:7010/hook/
