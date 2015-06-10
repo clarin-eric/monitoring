@@ -1,5 +1,7 @@
 from hashlib import sha256
+import argparse
 import ConfigParser
+import datetime
 import json
 import logging
 import subprocess
@@ -50,16 +52,28 @@ def post_hook():
         content = json.loads(request.form['payload'])
         # do status = 0 (success) do something
         if not content['status']:
-            logging.debug('Executing restart action')
+            logging.info('Executing restart action at {}'.format(
+                datetime.datetime.now()))
             _restart()
         else:
-            logging.debug('No successful build, not restarting Icinga')
+            logging.info('No successful build, not restarting Icinga')
         return "ok"
     else:
         return 'forbidden', 403
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug",
+                        help="get debug output",
+                        action="store_true")
+    args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+    else:
+        logging.basicConfig(format='%(message)s', level=logging.INFO)
+
     config = _get_config()
     token = _calculate_hash(config)
     # hmac compare_digest only available since 2.7.7 and 3.3
