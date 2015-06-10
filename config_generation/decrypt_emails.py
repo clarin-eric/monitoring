@@ -1,11 +1,19 @@
+import ConfigParser
 import logging
 
 from pynag import Model
 
-from config_generation.config_generation_centerregistry \
-    import _is_encrypted, _decrypt, _load_icinga_config, _load_script_config
+from config_generation_centerregistry import \
+    _is_encrypted, _decrypt, _load_icinga_config, _load_script_config
 
 CONFIG = None
+
+
+def _get_script_config(section='centerregistry'):
+    global CONFIG
+    config = ConfigParser.SafeConfigParser()
+    config.read('config.ini')
+    CONFIG = dict(config.items(section=section))
 
 
 def _decrypt_contacts():
@@ -21,19 +29,8 @@ def _decrypt_contacts():
             contact.save()
 
 
-def _manipulate_cgi_admins():
-    f = open('cgi.cfg', 'r')
-    content = f.read()
-    f.close()
-    content = content.replace('CLARINADMINS', CONFIG['clarinadmins'])
-    f = open('cgi.cfg', 'w')
-    f.write(content)
-    f.close()
-
-
 if __name__ == '__main__':
     global CONFIG
     CONFIG = _load_script_config()
-    _load_icinga_config('icinga.cfg')
+    _load_icinga_config('configuration/icinga.cfg')
     _decrypt_contacts()
-    _manipulate_cgi_admins()
