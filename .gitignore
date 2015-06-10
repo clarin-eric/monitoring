@@ -1,5 +1,6 @@
 # misc
 .idea
+.coverage
 config.ini
 
 # nagios/icinga
@@ -11,3 +12,4 @@ stylesheets
 
 # automated validation
 checkresults
+config_generation/configuration

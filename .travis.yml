@@ -7,11 +7,16 @@ before_install:
 
 before_script:
   - mkdir -p lib/spool lib/rw run/icinga cache/icinga lib/icinga/spool/checkresults lib/icinga/rw log/icinga
-  - sed -i "s/\/etc\/icinga\/resource.cfg/clarin\/resource.cfg/g" icinga.cfg
   - sed -i "s/\/var\///g" icinga.cfg
-  - echo '$USER1$=/usr/lib/icinga/plugins' > resource.cfg
+  - echo -e '$USER1$=/usr/lib/icinga/plugins\n$USER3$=/etc/icinga/probes' > resource.cfg
+  - pip install -r requirements.txt && pip install -r testing_requirements.txt
 
-script: /usr/sbin/icinga -v icinga.cfg
+script:
+ - /usr/sbin/icinga -v icinga.cfg
+ - find . -name "*.py" -exec pep8 {} \;
+ - nosetests --with-coverage --cover-package=config_generation,.
+ - radon mi config_generation .
+ - radon cc config_generation .
 
 notifications:
   webhooks: http://clarin.fz-juelich.de:7010/hook/
