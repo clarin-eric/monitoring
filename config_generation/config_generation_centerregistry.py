@@ -10,6 +10,7 @@ import re
 from cryptography.fernet import Fernet, InvalidToken
 from git import Repo
 from git.exc import GitCommandError
+from git.util import rmtree
 from pynag import Parsers, Model
 
 GIT = True
@@ -167,6 +168,7 @@ def _load_git_repo(repourl, repopath):
     except GitCommandError:
         logging.debug('Repository already there')
         repo = Repo(repopath)
+    repo.create_remote('github', repourl)
     return repo
 
 
@@ -176,12 +178,19 @@ def _push_and_delete_git_repo(repo):
     :param repo: Repo (GitPython Repo object)
     :return:
     """
-    if len(repo.untracked_files) > 0:
+    if repo.is_dirty(untracked_files=True):
+        logging.info('Commit to git repo at: {}'
+                     .format(datetime.datetime.now()))
         repo.index.add(repo.untracked_files)
-    message = 'Information from CenterRegistry fetched and changed in ' \
-              'configuration: {}'.format(datetime.datetime.now())
-    repo.index.commit(message)
-    # remove_repo(repo.working_dir)
+        message = 'Information from CenterRegistry fetched and changed in ' \
+                  'configuration: {}'.format(datetime.datetime.now())
+        repo.index.commit(message)
+        github = repo.remote('github')
+        github.push()
+    else:
+        logging.info('No changes, no commit at: {}'
+                     .format(datetime.datetime.now()))
+    rmtree(repo.working_dir)
 
 
 def _create_centerregistry_services(host_name,
@@ -443,7 +452,7 @@ def run():
     get repository, modify config, push repo
     :return:
     """
-    repo = _load_git_repo('git://github.com/clarin-eric/monitoring',
+    repo = _load_git_repo('git@github.com:clarin-eric/monitoring.git',
                           '{}/configuration'.format(os.getcwd()))
     _create_config_from_centerregistry()
     _push_and_delete_git_repo(repo)
