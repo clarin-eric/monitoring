@@ -11,6 +11,7 @@ install:
 before_script:
   - mkdir -p lib/spool lib/rw run/icinga cache/icinga lib/icinga/spool/checkresults lib/icinga/rw log/icinga
   - sed -i "s/\/var\///g" icinga.cfg
+  - sed -i "s/\/etc\/icinga\/resource.cfg/resource.cfg/g" icinga.cfg
   - echo -e '$USER1$=/usr/lib/icinga/plugins\n$USER3$=/etc/icinga/probes' > resource.cfg
 
 script:
