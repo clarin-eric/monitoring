@@ -453,7 +453,7 @@ def run():
     :return:
     """
     repo = _load_git_repo('git@github.com:clarin-eric/monitoring.git',
-                          '{}/configuration'.format(os.getcwd()))
+                          'configuration')
     _create_config_from_centerregistry()
     _push_and_delete_git_repo(repo)
 
