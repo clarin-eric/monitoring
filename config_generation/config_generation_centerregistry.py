@@ -1,4 +1,5 @@
 # coding=utf-8
+import argparse
 import ConfigParser
 import datetime
 import httplib2
@@ -15,7 +16,6 @@ from pynag import Parsers, Model
 
 GIT = True
 CONFIG = None
-DEBUG = True
 FETCHED = False
 
 REGISTRY = {
@@ -467,8 +467,26 @@ def run():
 
 
 if __name__ == '__main__':
-    if DEBUG:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug",
+                        help="get debug output",
+                        action="store_true")
+    parser.add_argument("--logstash",
+                        help="log everything (in addition) to logstash "
+                             ", give host:port")
+    args = parser.parse_args()
+
+    if args.debug:
         logging.basicConfig(format='%(message)s', level=logging.DEBUG)
     else:
         logging.basicConfig(format='%(message)s', level=logging.INFO)
+
+    logger = logging.getLogger()
+    logger.addHandler(logging.StreamHandler())
+    if args.logstash:
+        import logstash
+        host, port = args.logstash.split(':')
+        logger.addHandler(logstash.TCPLogstashHandler(host=host,
+                                                      port=int(port),
+                                                      version=1))
     run()

@@ -1,3 +1,4 @@
 Flask==0.10.1
 pynag==0.9.1
 GitPython==1.0.1
+python-logstash==0.4.5

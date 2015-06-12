@@ -67,12 +67,23 @@ if __name__ == '__main__':
     parser.add_argument("--debug",
                         help="get debug output",
                         action="store_true")
+    parser.add_argument("--logstash",
+                        help="log everything (in addition) to logstash "
+                             ", give host:port")
     args = parser.parse_args()
 
     if args.debug:
         logging.basicConfig(format='%(message)s', level=logging.DEBUG)
     else:
         logging.basicConfig(format='%(message)s', level=logging.INFO)
+    logger = logging.getLogger()
+    logger.addHandler(logging.StreamHandler())
+    if args.logstash:
+        import logstash
+        host, port = args.logstash.split(':')
+        logger.addHandler(logstash.TCPLogstashHandler(host=host,
+                                                      port=int(port),
+                                                      version=1))
 
     config = _get_config()
     token = _calculate_hash(config)
