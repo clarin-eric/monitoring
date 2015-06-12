@@ -158,17 +158,25 @@ def _replace_umlauts(text):
 
 def _load_git_repo(repourl, repopath):
     """
-    load our repo from
+    load our repo from github or, if its there, get the updates.
+    If there is a directory under repopath that is not a git repo, crash.
     :param repourl: string (external repo url)
     :param repopath: string (local path)
     :return: Repo (GitPython repo object)
     """
+    define_remote = True
     try:
         repo = Repo.clone_from(repourl, repopath)
     except GitCommandError:
         logging.debug('Repository already there')
         repo = Repo(repopath)
-    repo.create_remote('github', repourl)
+        try:
+            github = repo.remote('github')
+        except ValueError:
+            define_remote = False
+        github.pull()
+    if define_remote:
+        repo.create_remote('github', repourl)
     return repo
 
 
