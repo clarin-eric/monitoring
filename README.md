@@ -2,7 +2,7 @@
 
 # Monitoring configuration for networked CLARIN services and applications.
 
-[Travis CI]: https://travis-ci.org/BeneDicere/validate-icinga-test
+[Travis CI]: https://travis-ci.org/clarin-eric/monitoring
 [Icinga]: https://clarin.fz-juelich.de/icinga
 [NagVis]: https://clarin.fz-juelich.de/nagvis/frontend/nagvis-js/index.php
 [Centre Registry]: https://centres.clarin.eu
