@@ -15,7 +15,7 @@
 1. [`config_generation/config_generation_centerregistry.py`](../config_generation/config_generation_centerregistry.py) updates the production [Icinga] configuration on the monitoring server via `git pull` within `/etc/icinga/`. It also decrypts and then substitutes e-mail addresses within the pulled configuration. Finally it restarts [Icinga]. The new/expanded configuration will be used in production from then on.
 
 ## Notes
-* New monitoring plugins/probes should be in the `probes` directory. In [Icinga] `.cfg` files you can refer to the directory with `$USER3`.
+* New monitoring plugins/probes should be in the `probes` directory. In [Icinga] `.cfg` files you can refer to the directory with `$USER3$`.
 * [NagVis].
 
 ### Attention
