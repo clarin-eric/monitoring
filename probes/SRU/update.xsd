@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Update Initial Draft -->
+<!-- 3rd November 2004 -->
+<xsd:schema 
+targetNamespace="http://www.loc.gov/zing/srw/update/" 
+elementFormDefault="unqualified" 
+attributeFormDefault="unqualified" 
+xmlns:ucp="http://www.loc.gov/zing/srw/update/" 
+xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+xmlns:srw="http://www.loc.gov/zing/srw/" 
+xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/">
+<xsd:import namespace="http://www.loc.gov/zing/srw/" schemaLocation="http://www.loc.gov/standards/sru/xmlFiles/srw-types.xsd"/>
+<xsd:import namespace="http://www.loc.gov/zing/srw/diagnostic/" schemaLocation="http://www.loc.gov/standards/sru/xmlFiles/diagnostics.xsd"/>
+<xsd:element name="updateRequest" type="ucp:updateRequestType"/>
+<xsd:complexType name="updateRequestType">
+<xsd:complexContent>
+<xsd:extension base="srw:requestType">
+<xsd:sequence>
+<xsd:element ref="srw:version"/>
+<xsd:element ref="ucp:operation"/>
+<xsd:element ref="ucp:recordIdentifier" minOccurs="0"/>
+<xsd:element ref="ucp:recordVersions" minOccurs="0"/>
+<xsd:element ref="srw:record"/>
+<xsd:element ref="srw:extraRequestData"/>
+</xsd:sequence>
+</xsd:extension>
+</xsd:complexContent>
+</xsd:complexType>
+<xsd:element name="updateResponse" type="ucp:updateResponseType"/>
+<xsd:complexType name="updateResponseType">
+<xsd:complexContent>
+<xsd:extension base="srw:responseType">
+<xsd:sequence>
+<xsd:element ref="ucp:operationStatus"/>
+<xsd:element ref="ucp:recordIdentifier"/>
+<xsd:element ref="ucp:recordVersions"/>
+<xsd:element ref="srw:record"/>
+<xsd:element ref="srw:diagnostics"/>
+<xsd:element ref="srw:extraResponseData"/>
+</xsd:sequence>
+</xsd:extension>
+</xsd:complexContent>
+</xsd:complexType>
+<xsd:element name="explainRequest" type="ucp:explainRequestType" nillable="false"/>
+<xsd:complexType name="explainRequestType">
+<xsd:complexContent>
+<xsd:extension base="srw:requestType">
+<xsd:sequence>
+<xsd:element ref="srw:recordPacking" minOccurs="0"/>
+<xsd:element ref="srw:extraRequestData" minOccurs="0"/>
+</xsd:sequence>
+</xsd:extension>
+</xsd:complexContent>
+</xsd:complexType>
+<xsd:element name="explainResponse" type="ucp:explainResponseType" nillable="false"/>
+<xsd:complexType name="explainResponseType">
+<xsd:complexContent>
+<xsd:extension base="srw:responseType">
+<xsd:sequence>
+<xsd:element ref="srw:record"/>
+<xsd:element ref="srw:diagnostics" minOccurs="0"/>
+<xsd:element ref="srw:extraResponseData" minOccurs="0"/>
+</xsd:sequence>
+</xsd:extension>
+</xsd:complexContent>
+</xsd:complexType>
+<xsd:element name="operation" type="xsd:string" nillable="false"/>
+<xsd:element name="recordIdentifier" type="xsd:string" nillable="false"/>
+<xsd:element name="recordVersions" type="ucp:recordVersionsType" nillable="false"/>
+<xsd:complexType name="recordVersionsType">
+<xsd:sequence>
+<xsd:element ref="ucp:recordVersion" maxOccurs="unbounded"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:element name="recordVersion" type="ucp:recordVersionType"/>
+<xsd:complexType name="recordVersionType">
+<xsd:sequence>
+<xsd:element ref="ucp:versionType"/>
+<xsd:element ref="ucp:versionValue"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:element name="versionType" type="xsd:string" nillable="false"/>
+<xsd:element name="versionValue" type="xsd:string" nillable="false"/>
+<xsd:element name="operationStatus">
+<xsd:simpleType>
+<xsd:restriction base="xsd:string">
+<xsd:enumeration value="success"/>
+<xsd:enumeration value="fail"/>
+<xsd:enumeration value="partial"/>
+<xsd:enumeration value="delayed"/>
+</xsd:restriction>
+</xsd:simpleType>
+</xsd:element>
+</xsd:schema>

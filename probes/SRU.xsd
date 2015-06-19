@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+   <import namespace="http://docs.oasis-open.org/ns/search-ws/xcql"
+           schemaLocation="SRU/xcql.xsd"/>
+   <import namespace="http://www.loc.gov/zing/srw/"
+           schemaLocation="SRU/srw-types.xsd"/>
+   <import namespace="http://explain.z3950.org/dtd/2.0/"
+           schemaLocation="SRU/zeerex-2.1-unofficial.xsd"/>
+   <!-- TODO: there are problems combining the various XSDs -->
+   <!-- <import namespace="http://docs.oasis-open.org/ns/search-ws/scan"
+           schemaLocation="SRU/scan.xsd"/> -->
+   <!-- <import namespace="http://www.loc.gov/zing/srw/update/"
+           schemaLocation="SRU/update.xsd"/> -->
+   <!-- <import namespace="http://docs.oasis-open.org/ns/search-ws/sruResponse"
+           schemaLocation="SRU/sruResponse.xsd"/> -->
+   <import namespace="http://docs.oasis-open.org/ns/search-ws/facetedResults"
+           schemaLocation="SRU/facetedResults.xsd"/>
+   <import namespace="http://docs.oasis-open.org/ns/search-ws/diagnostic"
+           schemaLocation="SRU/diagnostic.xsd"/>
+   <import namespace="http://explain.z3950.org/dtd/2.0/"
+           schemaLocation="SRU/explain.xsd"/>
+   <import namespace="http://docs.oasis-open.org/ns/search-ws/sruRequest"
+           schemaLocation="SRU/sruRequest.xsd"/>
+   <import namespace="http://docs.oasis-open.org/ns/search-ws/searchResultAnalysis"
+           schemaLocation="SRU/searchResultAnalysis.xsd"/>
+</schema>
