@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:h="http://www.w3.org/1999/xhtml"
+    xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+    xmlns:ed="http://clarin.eu/fcs/endpoint-description" 
+    xml:lang="en"
+    vc:minVersion="1.0" vc:maxVersion="1.1"
+    elementFormDefault="qualified"
+    targetNamespace="http://clarin.eu/fcs/endpoint-description">
+    <xs:import namespace="http://www.w3.org/XML/1998/namespace"
+               schemaLocation="http://www.w3.org/2001/xml.xsd" />
+
+    <xs:annotation>
+        <xs:documentation>
+            <h:p>
+                This schema defines the structure of an extension to SRU/CQL
+                used by CLARIN-FCS.
+                </h:p>
+            <h:p>
+                An Endpoint MUST provide this information in the
+                <h:code>&lt;extraResponseData&gt;</h:code> element of the result
+                to an <h:em>explain</h:em> operation, if (and only if) a
+                CLARIN-FCS client performed the request with the
+                <h:code>x-clarin-fcs-endpoint-description</h:code> extra
+                request parameter with a value of <h:code>true</h:code>.  
+            </h:p>
+        </xs:documentation>    
+    </xs:annotation>
+    
+    <xs:element name="EndpointDescription">
+        <xs:annotation>
+            <xs:documentation>
+                <h:p>
+                    The root element of the Endpoint description extension for
+                    CLARIN-FCS extension.
+                </h:p>
+                <h:p>
+                    An Endpoint MUST provide this information in the
+                    <h:code>&lt;extraResponseData&gt;</h:code>
+                    element of the result to an <h:em>explain</h:em> operation,
+                    if (and only if) a CLARIN-FCS client performed the request
+                    with the <h:code>x-clarin-fcs-endpoint-description</h:code>
+                    extra request parameter with a value of <h:code>true</h:code>.
+                </h:p>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <!-- Capabilities -->
+                <xs:element name="Capabilities">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <h:p>A list of Capabilities, that are supported by this Endpoint.</h:p>
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Capability" maxOccurs="unbounded">
+                                <xs:annotation>
+                                    <xs:documentation>
+                                        A Capability, encoded by an URI, that is supported by this Endpoint.
+                                        For valid URIs, consult the CLARIN-FCS specification.
+                                    </xs:documentation>
+                                </xs:annotation>
+                                <xs:simpleType>
+                                    <xs:restriction base="xs:anyURI">
+                                        <xs:pattern value="http://clarin.eu/fcs/capability/\w([\.\-]{0,1}\w)*" />
+                                    </xs:restriction>
+                                </xs:simpleType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+
+                <!-- SupportedDataViews -->
+                <xs:element name="SupportedDataViews">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <h:p> A list of Data Views, that are supported
+                                by this Endpoint. </h:p>
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="SupportedDataView"  maxOccurs="unbounded">
+                                <xs:annotation>
+                                    <xs:documentation>
+                                        The MIME type of a supported Data View.
+                                    </xs:documentation>
+                                </xs:annotation>
+                                <xs:complexType>
+                                    <xs:simpleContent>
+                                        <xs:extension base="ed:mimetypeString">
+                                            <xs:attribute name="id" type="xs:ID" use="required">
+                                                <xs:annotation>
+                                                    <xs:documentation>
+                                                        <h:p>
+                                                            An unique ID for this support Data View. This value will be used,
+                                                            when referencing in the &lt;AvailableDataViews&gt; element in
+                                                            the &lt;Resource&gt; description. 
+                                                        </h:p>
+                                                    </xs:documentation>
+                                                </xs:annotation>
+                                            </xs:attribute>
+                                            <xs:attribute name="delivery-policy" use="required">
+                                                <xs:annotation>
+                                                    <xs:documentation>
+                                                        <h:p>
+                                                            This attribute indicated the <h:em>delivery policy</h:em> of this supported Data View.
+                                                        </h:p> 
+                                                    </xs:documentation>
+                                                </xs:annotation>
+                                                <xs:simpleType>
+                                                    <xs:restriction base="xs:string">
+                                                        <xs:enumeration value="send-by-default">
+                                                            <xs:annotation>
+                                                                <xs:documentation>
+                                                                    <h:p>
+                                                                        This Data View is automatically sent by the Endpoint for supported Resources.
+                                                                    </h:p>
+                                                                </xs:documentation>
+                                                            </xs:annotation>
+                                                        </xs:enumeration>
+                                                        <xs:enumeration value="need-to-request">
+                                                            <xs:annotation>
+                                                                <xs:documentation>
+                                                                    <h:p>
+                                                                        This Data View needs to be explicatively requested by the Client.
+                                                                    </h:p>
+                                                                </xs:documentation>
+                                                            </xs:annotation>
+                                                        </xs:enumeration>
+                                                    </xs:restriction>
+                                                </xs:simpleType>
+                                            </xs:attribute>
+                                        </xs:extension>
+                                    </xs:simpleContent>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                
+                <!-- Resources -->
+                <xs:element ref="ed:Resources">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <h:p>
+                                A list of top-level resources, that are available
+                                at an Endpoint. An Endpoint MUST
+                                declare at least one top-level resource.
+                            </h:p>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+
+                <!-- extension point -->
+                <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <h:p>
+                                Extension point to allow Endpoints to embed custom data in the Endpoint Description.
+                                CLARIN-FCS clients SHOULD ignore any data they do not understand.  
+                            </h:p>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:any>
+            </xs:sequence>
+            <xs:attribute name="version" type="xs:nonNegativeInteger" use="required">
+                <xs:annotation>
+                    <xs:documentation>
+                        <h:p>
+                            Version used for Endpoint Description. Endpoints MUST use the value "1".
+                        </h:p>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="Resources">
+        <xs:annotation>
+            <xs:documentation>
+                <h:p>
+                    A list of resources, that are available
+                    at an Endpoint. An Endpoint MUST
+                    declare at least one resource.
+                </h:p>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="ed:Resource" maxOccurs="unbounded"/>
+            </xs:sequence>                            
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="Resource">
+        <xs:annotation>
+            <xs:documentation>
+                <h:p>
+                    Detailed description of a resource that is available at an
+                    Endpoint. A resource is a searchable
+                    entity at an Endpoint, e.g. a single corpus.
+                </h:p>
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Title" type="ed:i18nString" maxOccurs="unbounded">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <h:p>
+                                A human readable title for the resource. An English version is
+                                mandatory.
+                            </h:p>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                
+                <xs:element name="Description" type="ed:i18nString" minOccurs="0" maxOccurs="unbounded">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <h:p>
+                                An optional human-readable description of the resource. Is should
+                                be at most one sentence. If supplied, an English version is
+                                mandatory.
+                            </h:p>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                
+                <xs:element name="LandingPageURI" type="xs:anyURI" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <h:p>
+                                A link to a website for the resource, e.g. a landing page for a corpus. 
+                            </h:p>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                
+                <xs:element name="Languages">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <h:p>
+                                The (relevant) languages available <h:em>within</h:em> the resource.
+                            </h:p>
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Language" maxOccurs="unbounded">
+                                <xs:annotation>
+                                    <xs:documentation>
+                                        <p>
+                                            A ISO 639-3 three letter language code. This
+                                            element should be repeated for all languages
+                                            (relevant) available <h:em>within</h:em> the resource.
+                                        </p>
+                                    </xs:documentation>
+                                </xs:annotation>
+                                <xs:simpleType>
+                                    <xs:restriction base="xs:string">
+                                        <xs:pattern value="[a-zA-Z]{3}"/>
+                                    </xs:restriction>
+                                </xs:simpleType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                
+                <xs:element name="AvailableDataViews">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <h:p>
+                                This element contains a reference to all Data Views that are
+                                supported by this resource in the <h:code>@ref</h:code> attribute.
+                            </h:p>
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:attribute name="ref" type="xs:IDREFS" use="required" />
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element ref="ed:Resources" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <h:p>
+                                If a resource has searchable sub-resources
+                                the Endpoint MUST supply additional finer grained
+                                &lt;Resource&gt; elements. A sub-resource is a
+                                searchable entity within a resource, e.g. a sub-corpus.
+                            </h:p>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+
+                <!-- extension point -->
+                <xs:any namespace="##other" processContents="skip" minOccurs="0" maxOccurs="unbounded">
+                    <xs:annotation>
+                        <xs:documentation>
+                            <h:p>
+                                Extension point to allow Endpoints to embed custom data in the Endpoint Description
+                                for a specific resource. CLARIN-FCS clients SHOULD ignore any data they do not understand.  
+                            </h:p>
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:any>
+            </xs:sequence>
+            <xs:attribute name="pid" type="xs:anyURI" use="required">
+                <xs:annotation>
+                    <xs:documentation>
+                        <h:p>
+                            The persistent identifier of this resource. This
+                            value MUST be the same as the <h:code>MdSelfLink</h:code>
+                            of the CMDI record describing the collection.
+                        </h:p>
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:simpleType name="mimetypeString">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="\w+/\w([\.\-]{0,1}\w)*(\+\w+){0,1}" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="i18nString">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute ref="xml:lang" use="required" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+</xs:schema>

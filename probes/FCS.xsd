@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema
+    xmlns="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified">
+    <import
+        namespace="http://clarin.eu/fcs/endpoint-description"
+        schemaLocation="FCS/Endpoint-Description.xsd"/>
+    <import
+        namespace="http://clarin.eu/fcs/dataview/hits"
+        schemaLocation="FCS/DataView-Hits.xsd"/>
+    <import
+        namespace="http://clarin.eu/fcs/resource"
+        schemaLocation="FCS/Resource.xsd"/>
+    <!--"http://docs.oasis-open.org/ns/search-ws/sruResponse"-->
+    <import
+        namespace="http://www.loc.gov/zing/srw/"
+        schemaLocation="searchRetrievev1/sruResponse.xsd"/>
+    <import
+        namespace="http://docs.oasis-open.org/ns/search-ws/diagnostic"
+        schemaLocation="searchRetrievev1/diagnostic.xsd"/>
+    <import
+        namespace="http://docs.oasis-open.org/ns/search-ws/facetedResults"
+        schemaLocation="searchRetrievev1/facetedResults.xsd"/>
+    <import
+        namespace="http://docs.oasis-open.org/ns/search-ws/searchResultAnalysis"
+        schemaLocation="searchRetrievev1/searchResultAnalysis.xsd"/>
+    <import
+        namespace="http://docs.oasis-open.org/ns/search-ws/xcql"
+        schemaLocation="searchRetrievev1/xcql.xsd"/>
+    <import
+        namespace="http://docs.oasis-open.org/ns/search-ws/scan"
+        schemaLocation="searchRetrievev1/scan.xsd"/>
+</schema>
