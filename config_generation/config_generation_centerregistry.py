@@ -194,7 +194,7 @@ def _push_and_delete_git_repo(repo):
                   'configuration: {}'.format(datetime.datetime.now())
         repo.index.commit(message)
         github = repo.remote('github')
-        github.push()
+        #github.push()
     else:
         logging.info('No changes, no commit at: {}'
                      .format(datetime.datetime.now()))
