@@ -34,13 +34,13 @@ probe_oai_pmh_endpoint() {
 
 probe_json() {
     probe_curl_get "${1}" "${2}" 'application/json' |
-    python -I -m json.tool 1> /dev/null 2>&1
+    python -I -m json.tool 1> /dev/null 2>&1 ||
     return "$?" ;
 }
 
 probe_saml_metadata() {
     probe_curl_get "${1}" "${2}" 'application/xml' |
-    xmllint --noout - 1> /dev/null # TODO: validate using SAML tools
+    xmllint --noout - 1> /dev/null || # TODO: validate using SAML tools
     return "$?" ;
 }
 
