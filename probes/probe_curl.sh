@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 
 temp_data_file_path="$(mktemp)"
 tmp_details_file_path="$(mktemp)"
