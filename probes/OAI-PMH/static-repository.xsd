@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<schema targetNamespace="http://www.openarchives.org/OAI/2.0/static-repository"
+        xmlns="http://www.w3.org/2001/XMLSchema"
+        xmlns:sr="http://www.openarchives.org/OAI/2.0/static-repository"
+        xmlns:oai="http://www.openarchives.org/OAI/2.0/"
+        elementFormDefault="qualified"
+        attributeFormDefault="unqualified">
+
+  <import namespace="http://www.openarchives.org/OAI/2.0/"
+          schemaLocation="http://www.openarchives.org/OAI/2.0/OAI-PMH-static-repository.xsd"/>
+
+  <annotation>
+    <documentation>
+    This XML Schema specifies the structure of an OAI-PMH Static Repository. 
+    A Static Repository is an XML file that is valid according to this XML 
+    Schema and is described in 
+    http://www.openarchives.org/OAI/2.0/guidelines-static-repository.htm
+    A Static Repository is made accessible as an XML file on a standard 
+    web-server. No special software is required at the end of the organization
+    that makes the Static Repository available. A Static Repository becomes 
+    harvestable via the OAI-PMH through the intermediation of a Static 
+    Repository Gateway. 
+
+    This Static Repository XML Schema by Herbert Van de Sompel and Henry N. 
+    Jerez (Los Alamos National Laboratory, Research Library, Digital Library 
+    Research and Prototyping Team; original 2002-10-26), and Simeon Warner 
+    (Cornell University). Inspired by the Vida work by Steven Bird for OAI-PMH
+    v1.0 and for the Open Languages Archives Community; see 
+    http://www.language-archives.org/docs/implement.html#Vida
+    
+    Beta2 release: 2004-03-30
+    Release: 2004-04-23
+    $Date: 2004/04/23 15:17:46 $
+    </documentation>
+  </annotation>
+
+  <element name="Repository" type="sr:RepositoryType"/>
+
+  <complexType name="RepositoryType">
+    <annotation>
+      <documentation>The Repository element has 2 child elements, Identify 
+      and ListMetadataFormats, that are derived from the OAI-PMH v2.0 XML 
+      Schema. The third element, ListRecords, is repeatable and is an 
+      extension of the ListRecords defined in the OAI-PMH v2.0 XML Schema; 
+      it has an additional attribute indicating the metadataPrefix of the 
+      included metadata records.
+      </documentation>
+    </annotation>
+    <sequence>
+      <element name="Identify" type="oai:IdentifyType"/>
+      <element name="ListMetadataFormats" type="oai:ListMetadataFormatsType"/>
+      <element name="ListRecords" type="sr:ListRecordsType" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="ListRecordsType">
+    <annotation>
+      <documentation>The ListRecords element contains all records with 
+      metadata expressed in one of the metadata formats supported by the 
+      Static Repository. The mandatory metadataPrefix attribute specifies the 
+      metadataPrefix of the included metadata; it must correspond with a value 
+      of the metadataPrefix element contained in the ListMetadataFormats 
+      element.
+      </documentation>
+    </annotation>
+    <complexContent>
+      <extension base="oai:ListRecordsType">
+        <attribute name="metadataPrefix" type="oai:metadataPrefixType" use="required"/>
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>
