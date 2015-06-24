@@ -46,7 +46,7 @@ probe_curl_handle_json() {
     # $2: Root directory path for curl.format and other data files.
     # $3: Optional extra command-line parameter(s) for curl.
     probe_curl_get "${1}" "${2}" 'application/xml' $3 &&
-    python -I -c 'from json import load; from sys import stdin, exit; json_obj=load(stdin); exit(0 if json_obj["responseCode"] == 1 else 2)' <"${tmp_file_path}" 2>&1 ||
+    python3 -I -c 'from json import load; from sys import stdin, exit; json_obj=load(stdin); exit(0 if json_obj["responseCode"] == 1 else 2)' <"${tmp_file_path}" 2>&1 ||
     return "$?" ;
 }
 
@@ -79,7 +79,7 @@ probe_json() {
     # $2: Root directory path for curl.format and other data files.
     # $3: Optional extra command-line parameter(s) for curl.
     probe_curl_get "${1}" "${2}" 'application/json' $3 &&
-    python -I -m 'json.tool' <"${tmp_file_path}" 1> '/dev/null' 2>&1 ||
+    python3 -I -m 'json.tool' <"${tmp_file_path}" 1> '/dev/null' 2>&1 ||
     return "$?" ;
 }
 
