@@ -8,7 +8,7 @@ probe_curl_head() {
     # $1: Full URL.
     # $2: Root directory path for curl.format and other data files.
     # $3: Optional extra command-line parameter(s) for curl.
-    /usr/bin/curl --fail --head --location --referer "${REFERER}" --show-error --silent --tlsv1.2 --verbose --write-out "@${2}/curl.format" "${1}" $3 2>&1 ||
+    { /usr/bin/curl --fail --head --location --referer "${REFERER}" --show-error --silent --tlsv1.2 --verbose --write-out "@${2}/curl.format" "${1}" $3 ; } 2>&1 ||
     return "$?" ;
 }
 
@@ -18,7 +18,7 @@ probe_curl_get() {
     # $2: Root directory path for curl.format and other data files.
     # $3: Expected Internet media type of HTTP response (MIME/content type).
     # $4: Optional extra command-line parameter(s) for curl.
-    /usr/bin/curl --fail --header "Accept: ${3}" --location --output "${tmp_file_path}" --referer "${REFERER}" --show-error --silent --tlsv1.2 --verbose --write-out "@${2}/curl.format" "${1}" $4 2>&1 &&
+    { /usr/bin/curl --fail --header "Accept: ${3}" --location --output "${tmp_file_path}" --referer "${REFERER}" --show-error --silent --tlsv1.2 --verbose --write-out "@${2}/curl.format" "${1}" $4 ; } 2>&1 &&
     cat "${tmp_file_path}" ||
     return "$?" ;
 }
