@@ -1,0 +1,54 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+           xmlns:oai-identifier="http://www.openarchives.org/OAI/1.1/oai-identifier"
+           targetNamespace="http://www.openarchives.org/OAI/1.1/oai-identifier"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+    <annotation>
+     <documentation>
+      Schema for description section of Identify reply, for repositories that comply with the oai format
+      for unique identifiers for records.
+      the Open Archives Initiative. 2000. 
+      Validated at http://www.w3.org/2001/03/webdata/xsv on 05-09-2001.
+     </documentation>
+    </annotation>
+
+  <element name="oai-identifier" type="oai-identifier:oai-identifierType"/>
+
+  <complexType name="oai-identifierType">
+   <sequence>
+    <!--    ....   -->
+    <!-- Repositories that comply to the OAI format of unique record identifiers, use unique identifiers -->
+    <!-- that are the concatenation of: -->
+    <!--    * A "scheme" that must be equal to oai -->
+    <!--    * A "repositoryIdentifier" that is a unique identifier for a repository.  Its uniqueness will be -->
+    <!--      tested as part of a registration process.        -->
+    <!--      The repositoryIdentifier is case sensitive and may contain the characters -->
+    <!--      [a-z]|[A-Z]|[0-9] e.g. arXiv, VTETD. -->
+    <!--    * A local identifier that is the unique identifier of a record within a repository -->
+    <!--    * These three parts must be concatenated using a "delimiter" which must be a colon.   -->
+    <!--    ....   -->
+    <element name="scheme" minOccurs="1" maxOccurs="1" fixed="oai"/>
+    <element name="repositoryIdentifier" minOccurs="1" maxOccurs="1" type="oai-identifier:repositoryIdentifierType"/>
+    <element name="delimiter" minOccurs="1" maxOccurs="1" fixed=":"/>
+    <!--    ....   -->
+    <!-- "sampleIdentifier" : A sample identifier from the repository, e.g. oai:arXiv:hep-th/9901001 , -->
+    <!-- oai:VTETD:etd-3345131939761081 -->
+    <!--    ....   -->
+    <element name="sampleIdentifier" minOccurs="1" maxOccurs="1" type="oai-identifier:IdentifierType"/>
+   </sequence>
+  </complexType>
+
+  <simpleType name="repositoryIdentifierType">
+   <restriction base="string">
+     <pattern value="[a-zA-Z0-9]+"/>
+   </restriction>
+  </simpleType>
+
+  <simpleType name="IdentifierType">
+   <restriction base="string">
+     <pattern value="oai:[a-zA-Z0-9]+:.*"/>
+   </restriction>
+  </simpleType>
+
+   </schema>
