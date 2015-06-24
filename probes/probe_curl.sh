@@ -1,31 +1,69 @@
 #!/bin/sh
 
 tmp_file_path="$(mktemp)"
+REFERER='https://clarin.fz-juelich.de/icinga/'
 
 probe_curl_head() {
-    /usr/bin/curl -I -o "${tmp_file_path}" --tlsv1.2 -e 'https://clarin.fz-juelich.de/icinga/' -f -L -S -s -v -w "@${2}/curl.format" "${1}" ||
+    # HTTP HEAD request.
+    # $1: Full URL.
+    # $2: Root directory path for curl.format and other data files.
+    # $3: Optional extra command-line parameter(s) for curl.
+    /usr/bin/curl --fail --head --location --referer "${REFERER}" --show-error --silent --tlsv1.2 --verbose --write-out $3 "@${2}/curl.format" "${1}" ||
     return "$?" ;
 }
 
 probe_curl_get() {
-    /usr/bin/curl -o "${tmp_file_path}" --tlsv1.2 -e 'https://clarin.fz-juelich.de/icinga/' -f -L -S -s -v -w "@${2}/curl.format" -H "Accept: ${3}" "${1}" 1>&2 &&
+    # HTTP GET request.
+    # $1: Full URL.
+    # $2: Root directory path for curl.format and other data files.
+    # $3: Expected Internet media type of HTTP response (MIME/content type).
+    # $4: Optional extra command-line parameter(s) for curl.
+    /usr/bin/curl --fail --header "Accept: ${3}" --location --output "${tmp_file_path}" --referer "${REFERER}" --show-error --silent --tlsv1.2 --verbose --write-out "@${2}/curl.format" "${1}" $4 1>&2 &&
     cat "${tmp_file_path}" ||
     return "$?" ;
 }
 
 probe_curl_ldap() {
-    /usr/bin/curl -v -n -f "${1}" ||
+    /usr/bin/curl --verbose --netrc --fail "${1}" $2 ||
+    return "$?" ;
+}
+
+probe_curl_imdi() {
+    # HTTP GET request with IMDI response data validation.
+    # $1: Full URL.
+    # $2: Root directory path for curl.format and other data files.
+    # $3: Optional extra command-line parameter(s) for curl.
+    probe_curl_get "${1}" "${2}" 'application/xml' $3 |
+    xmllint --noout - || # TODO: validate using correct schema "$2/IMDI/IMDI_3.0.xsd"
+    return "$?" ;
+}
+
+probe_curl_handle_json() {
+    # HTTP GET request with Handle JSON response data validation.
+    # $1: Full URL.
+    # $2: Root directory path for curl.format and other data files.
+    # $3: Optional extra command-line parameter(s) for curl.
+    probe_curl_get "${1}" "${2}" 'application/xml' $3 |
+    python -I -c 'from json import load; from sys import stdin, exit; json_obj=load(stdin); exit(0 if json_obj["responseCode"] == 1 else 2)' ||
     return "$?" ;
 }
 
 probe_sru_endpoint() {
-    probe_curl_get "${1}" "${2}" 'application/xml' |
+    # HTTP GET request with SRU XML response data validation.
+    # $1: Full URL.
+    # $2: Root directory path for curl.format and other data files.
+    # $3: Optional extra command-line parameter(s) for curl.
+    probe_curl_get "${1}" "${2}" 'application/xml' $3 |
     xmllint --noout - || # TODO: validate using definite set of schemas --schema "$2/SRU.xsd"
     return "$?" ;
 }
 
 probe_oai_pmh_endpoint() {
-    { probe_curl_get "${1}" "${2}" 'application/xml' |
+    # HTTP GET request with OAI-PMH XML response data validation.
+    # $1: Full URL.
+    # $2: Root directory path for curl.format and other data files.
+    # $3: Optional extra command-line parameter(s) for curl.
+    { probe_curl_get "${1}" "${2}" 'application/xml' $3 |
     xmllint --noout --schema "$2/OAI-PMH/OAI-PMH.xsd" - ; } ||
     probe_curl_head "${1}" |
     grep -Eio 'Retry-After: [[:digit:]]+' ||
@@ -33,14 +71,22 @@ probe_oai_pmh_endpoint() {
 }
 
 probe_json() {
-    probe_curl_get "${1}" "${2}" 'application/json' |
-    python -I -m json.tool 1> /dev/null 2>&1 ||
+    # HTTP GET request with JSON response data wellformedness check.
+    # $1: Full URL.
+    # $2: Root directory path for curl.format and other data files.
+    # $3: Optional extra command-line parameter(s) for curl.
+    probe_curl_get "${1}" "${2}" 'application/json' $3 |
+    python -I -m 'json.tool' 1> '/dev/null' 2>&1 ||
     return "$?" ;
 }
 
 probe_saml_metadata() {
-    probe_curl_get "${1}" "${2}" 'application/xml' |
-    xmllint --noout - 1> /dev/null || # TODO: validate using SAML tools
+    # HTTP GET request with SAML metadata XML response data validation.
+    # $1: Full URL.
+    # $2: Root directory path for curl.format and other data files.
+    # $3: Optional extra command-line parameter(s) for curl.
+    probe_curl_get "${1}" "${2}" 'application/xml' $3 |
+    xmllint --noout - 1> '/dev/null' || # TODO: validate using SAML tools
     return "$?" ;
 }
 
