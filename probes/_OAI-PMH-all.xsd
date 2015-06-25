@@ -38,6 +38,10 @@
            schemaLocation="OAI-PMH/oai_marc.xsd"/>
    <import namespace="http://purl.org/dc/elements/1.1/"
            schemaLocation="OAI-PMH/dc.xsd"/>
+   <import namespace="http://www.openarchives.org/OAI/2.0/oai_dc/"
+           schemaLocation="OAI-PMH/oai_dc.xsd"/>
    <import namespace="http://www.language-archives.org/OLAC/1.1/olac-archive"
            schemaLocation="OAI-PMH/olac-archive.xsd"/>
+   <import namespace="http://oai.dlib.vt.edu/OAI/metadata/toolkit"
+           schemaLocation="OAI-PMH/toolkit.xsd"/>
 </schema>

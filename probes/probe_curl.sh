@@ -92,7 +92,7 @@ probe_oai_pmh_endpoint() {
     curl_exit_status="$?"
     if [ $curl_exit_status -eq 22 ]; then
         # Check for a probable 503 response that gives a Retry-After response header: we accept this as it is.
-        probe_curl_head "${1}?verb=Identify" "${2}" $3 |
+        _probe_curl_http_head "${1}?verb=Identify" "${2}" $3 |
         grep -Eio 'Retry-After: [[:digit:]]+' 2>&1 ||
         return 2 ;
     else

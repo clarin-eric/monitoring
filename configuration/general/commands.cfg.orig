@@ -1,0 +1,126 @@
+###
+### general
+###
+
+define command {
+    command_name    check_dummy
+    command_line    $USER1$/check_dummy 0
+}
+
+define command {
+    command_name	check_http_redefined
+    command_line	$USER1$/check_http $ARG1$
+}
+
+define command {
+    command_name    freshness_warning
+    command_line    $USER1$/check_dummy 4 "UNKNOWN: Attention, did not get fresh checks!"
+    # TODO: meaning? for hosts that we only get passive results from, this
+    # command i invoked after freshness is not given and emails are sent.
+}
+
+define command {
+    command_name    check-ping
+    command_line    $USER1$/check_ping -H $HOSTADDRESS$ -w 3000.0,80% -c 5000.0,100% -p 5
+}
+
+define command {
+    command_name    curl_probe
+    command_line    curl --tlsv1.2 -e 'https://clarin.fz-juelich.de/icinga/' -f -L -s -v -o /dev/null -w '@$USER3$/curl.format' '$ARG1$://$ARG2$:$ARG4$/$ARG3$' 2>&1 || exit 2
+}
+
+define command {
+    command_name    curl_probe_oai_pmh
+    command_line    curl --tlsv1.2 -e 'https://clarin.fz-juelich.de/icinga/' -f -L -s -v -o /dev/null -w '@$USER3$/curl.format' '$ARG1$://$ARG2$:$ARG4$/$ARG3$' 2>&1 || curl -s -I '$ARG1$://$ARG2$:$ARG4$/$ARG3$' | grep -Eio 'Retry-After: [[:digit:]]+' || exit 2
+}
+
+define command {
+    command_name    clarin_saml_probe
+    command_line    $USER3$/check_clarin_saml.sh '$HOSTADDRESS$' 2>&1
+    # TODO:
+}
+
+define command {
+    command_name    clarin_ldap_probe
+    command_line    sudo $USER3$/check_clarin_ldap.py -h '$HOSTADDRESS$' -b 'cn=Directory Manager' 2>&1
+    # TODO:
+
+}
+
+define command {
+    command_name    clarin_central_discovery_service_json_probe
+    command_line    $USER3$/check_json.sh '$HOSTADDRESS$' '/metadata/clarin_spf_idps.json' 2>&1
+    # TODO: parameterize
+    # TODO:
+}
+
+###
+### Centre Registry
+###
+
+define command {
+    command_name	check_cql
+    command_line	$USER3$/mpi/check_lat_cql_endpoint.py -s $ARG1$ -h $ARG2$ -u $ARG3$ -p $ARG4$
+}
+
+#define command {
+#    command_name	check_oai
+#    command_line	$USER3$/mpi/check_lat_oai_endpoint.py -s $ARG1$ -h $ARG2$ -u $ARG3$ -p $ARG4$
+#}
+
+define command {
+    command_name   check_oai
+    command_line   curl --tlsv1.2 -e 'https://clarin.fz-juelich.de/icinga/' -f -L -s -v -o /dev/null -w '@$USER3$/curl.format' '$ARG1$://$ARG2$:$ARG4$/$ARG3$' 2>&1 || curl -s -I '$ARG1$://$ARG2$:$ARG4$/$ARG3$' | grep -Eio 'Retry-After: [[:digit:]]+' || exit 2
+}
+
+###
+### Weblicht
+###
+
+define command{
+        command_name    jar_wrapper
+        command_line    $USER2$/tue/jar_wrapper.sh $ARG1$ $ARG2$ $ARG3$
+}
+
+###
+<<<<<<< HEAD
+### Tuebingen
+###
+
+define command{
+        command_name    check_convert-all
+        command_line    $USER2$/tue/check_convert-all.sh $HOSTADDRESS$
+}
+
+###
+### old
+=======
+### Dieter
+>>>>>>> 0b5b7abe5db5cb6d03c0adb43b6304bf3c18a369
+###
+
+define command{
+        command_name    check_annex
+        command_line    python $USER2$/mpi/check_lat_annex.py -s $ARG1$ -h $HOSTADDRESS$ -u $ARG2$ -p $ARG3$
+}
+
+define command{
+        command_name    check_handle
+        command_line    python $USER2$/mpi/check_lat_handle.py -s $ARG1$ -h $HOSTADDRESS$ -u $ARG2$ -p $ARG3$
+}
+
+define command{
+        command_name    check_imdi
+        command_line    python $USER2$/mpi/check_lat_imdi.py -s $ARG1$ -h $HOSTADDRESS$ -u $ARG2$ -p $ARG3$
+}
+
+define command{
+        command_name    check_lamus
+        command_line    python $USER2$/mpi/check_lat_lamus.py -s $ARG1$ -h $HOSTADDRESS$ -u $ARG2$ -p $ARG3$
+}
+
+define command{
+        command_name    check_lexus
+        command_line    python $USER2$/mpi/check_lat_lexus.py -s $ARG1$ -h $HOSTADDRESS$ -u $ARG2$ -p $ARG3$
+}
+
