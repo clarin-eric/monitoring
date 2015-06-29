@@ -5,21 +5,27 @@ tmp_details_file_path="$(mktemp)"
 REFERER='https://clarin.fz-juelich.de/icinga/'
 
 saved_traps=$(trap)
-trap 'rm -vf "${temp_data_file_path}" ; trap "${saved_traps}"' 'EXIT' 'INT' 'TERM' 'HUP'
+trap 'rm -vf "${temp_data_file_path}" ; $saved_traps' 'EXIT' 'INT' 'TERM' 'HUP'
 
 ##
 ## Private functions
 ##
-
+##
 _probe_curl_http_head() {
     # HTTP HEAD request.
     # $1: Full URL.
     # $2: Root directory path for curl.format and other data files.
-    # $3: Optional extra command-line parameter(s) for curl.
-    performance_data_1=$(/usr/bin/curl --fail --head --location --referer "${REFERER}" --show-error --silent --stderr "${tmp_details_file_path}" --tlsv1.2 --verbose --write-out "@${2}/curl.format" $3 "${1}" ; ) ;
+    # $3: Optional acceptable failure-indicating HTTP response code.
+    # $4: Optional extra command-line parameter(s) for curl.
+    _stdout_data=$(/usr/bin/curl --fail --head --location --output "${temp_data_file_path}" --referer "${REFERER}" --show-error --silent --stderr "${tmp_details_file_path}" --tlsv1.2 --verbose --write-out "@${2}/curl.format" $4 "${1}" ; ) ;
     curl_exit_status="$?" ;
+    performance_data=$(printf '%s' "${_stdout_data}" | sed -n '1{p;q;}' ; )
+    response_code=$(printf '%s' "${_stdout_data}" | sed -n '2{p;q;}' ; )
     details_data="$(cat "${tmp_details_file_path}" ; )" ;
-    printf 'curl exit status: %d | %s\n%s %s\n\n' "${curl_exit_status}" "${performance_data_1}" "${details_data}" ;
+    printf 'curl exit status: %d | %s\n%s %s\n\n' "${curl_exit_status}" "${performance_data}" "${details_data}" ;
+    if [ -n "$3" ] && [ "${response_code}" = "$3" ]; then
+        curl_exit_status='0' ;
+    fi
     return "${curl_exit_status}" ;
 }
 
@@ -92,7 +98,7 @@ probe_oai_pmh_endpoint() {
     curl_exit_status="$?"
     if [ $curl_exit_status -eq 22 ]; then
         # Check for a probable 503 response that gives a Retry-After response header: we accept this as it is.
-        _probe_curl_http_head "${1}?verb=Identify" "${2}" $3 |
+        _probe_curl_http_head "${1}?verb=Identify" "${2}" '503' $3 |
         grep -Eio 'Retry-After: [[:digit:]]+' 2>&1 ||
         return 2 ;
     else
@@ -130,8 +136,9 @@ probe_http_head() {
     # HTTP HEAD request.
     # $1: Full URL.
     # $2: Root directory path for curl.format and other data files.
-    # $3: Optional extra command-line parameter(s) for curl.
-    _probe_curl_http_head "${1}" "${2}" $3 ||
+    # $3: Optional acceptable failure-indicating HTTP response code.
+    # $4: Optional extra command-line parameter(s) for curl.
+    _probe_curl_http_head "${1}" "${2}" "${3}" $4 ||
     return 2 ;
 }
 
@@ -141,7 +148,7 @@ probe_http_get() {
     # $2: Root directory path for curl.format and other data files.
     # $3: Expected Internet media type of HTTP response (MIME/content type).
     # $4: Optional extra command-line parameter(s) for curl.
-    _probe_curl_http_get "${1}" "${2}" $3 ||
+    _probe_curl_http_get "${1}" "${2}" "${3}" $4 ||
     return 2 ;
 }
 
