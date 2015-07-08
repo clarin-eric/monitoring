@@ -164,37 +164,40 @@ def _load_git_repo(repourl, repopath):
     :param repopath: string (local path)
     :return: Repo (GitPython repo object)
     """
-    define_remote = True
     try:
         repo = Repo.clone_from(repourl, repopath)
     except GitCommandError:
-        logging.debug('Repository already there')
+        logging.error('Repository already there')
         repo = Repo(repopath)
         try:
             github = repo.remote('github')
         except ValueError:
-            define_remote = False
+            logging.error('Remote already there')
         github.pull()
-    if define_remote:
+    try:
         repo.create_remote('github', repourl)
+    except GitCommandError:
+        logging.error('Remote already there')
+
     return repo
 
 
-def _push_and_delete_git_repo(repo):
+def _push_and_delete_git_repo(repo, push=False):
     """
     add new files, commit, push and delete the local repo.
     :param repo: Repo (GitPython Repo object)
     :return:
     """
     if repo.is_dirty(untracked_files=True):
-        logging.info('Commit to git repo at: {}'
-                     .format(datetime.datetime.now()))
         repo.index.add(repo.untracked_files)
         message = 'Information from CenterRegistry fetched and changed in ' \
                   'configuration: {}'.format(datetime.datetime.now())
         repo.index.commit(message)
         github = repo.remote('github')
-        github.push()
+        if push:
+            logging.info('Push to git repo at: {}'
+                         .format(datetime.datetime.now()))
+            github.push()
     else:
         logging.info('No changes, no commit at: {}'
                      .format(datetime.datetime.now()))
@@ -455,7 +458,7 @@ def _create_config_from_centerregistry():
                                                 filename=filename)
 
 
-def run():
+def run(push=False):
     """
     get repository, modify config, push repo
     :return:
@@ -463,7 +466,7 @@ def run():
     repo = _load_git_repo('git@github.com:clarin-eric/monitoring.git',
                           'configuration')
     _create_config_from_centerregistry()
-    _push_and_delete_git_repo(repo)
+    _push_and_delete_git_repo(repo=repo, push=push)
 
 
 if __name__ == '__main__':
@@ -474,12 +477,20 @@ if __name__ == '__main__':
     parser.add_argument("--logstash",
                         help="log everything (in addition) to logstash "
                              ", give host:port")
+    parser.add_argument("--push",
+                        help="push repo to github",
+                        action="store_true")
     args = parser.parse_args()
 
     if args.debug:
         logging.basicConfig(format='%(message)s', level=logging.DEBUG)
     else:
         logging.basicConfig(format='%(message)s', level=logging.INFO)
+
+    if args.push:
+        push = True
+    else:
+        push = False
 
     logger = logging.getLogger()
     logger.addHandler(logging.StreamHandler())
@@ -489,4 +500,4 @@ if __name__ == '__main__':
         logger.addHandler(logstash.TCPLogstashHandler(host=host,
                                                       port=int(port),
                                                       version=1))
-    run()
+    run(push=push)
