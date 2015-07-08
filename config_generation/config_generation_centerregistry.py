@@ -181,7 +181,9 @@ def _push_and_delete_git_repo(repo, push=False):
     :return:
     """
     if repo.is_dirty(untracked_files=True):
-        repo.index.add(repo.untracked_files)
+        files = repo.untracked_files
+        files.append('*')
+        repo.index.add(files)
         message = 'Information from CenterRegistry fetched and changed in ' \
                   'configuration: {}'.format(datetime.datetime.now())
         repo.index.commit(message)
@@ -189,7 +191,9 @@ def _push_and_delete_git_repo(repo, push=False):
         if push:
             logging.info('Push to git repo at: {}'
                          .format(datetime.datetime.now()))
-            github.push()
+            push = github.push()
+            for item in push:
+                print item
     else:
         logging.info('No changes, no commit at: {}'
                      .format(datetime.datetime.now()))
