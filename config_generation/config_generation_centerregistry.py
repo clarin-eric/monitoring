@@ -169,16 +169,8 @@ def _load_git_repo(repourl, repopath):
     except GitCommandError:
         logging.error('Repository already there')
         repo = Repo(repopath)
-        try:
-            github = repo.remote('github')
-        except ValueError:
-            logging.error('Remote already there')
+        github = repo.remote('origin')
         github.pull()
-    try:
-        repo.create_remote('github', repourl)
-    except GitCommandError:
-        logging.error('Remote already there')
-
     return repo
 
 
@@ -193,7 +185,7 @@ def _push_and_delete_git_repo(repo, push=False):
         message = 'Information from CenterRegistry fetched and changed in ' \
                   'configuration: {}'.format(datetime.datetime.now())
         repo.index.commit(message)
-        github = repo.remote('github')
+        github = repo.remote('origin')
         if push:
             logging.info('Push to git repo at: {}'
                          .format(datetime.datetime.now()))
