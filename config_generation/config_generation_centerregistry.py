@@ -191,9 +191,7 @@ def _push_and_delete_git_repo(repo, push=False):
         if push:
             logging.info('Push to git repo at: {}'
                          .format(datetime.datetime.now()))
-            push = github.push()
-            for item in push:
-                print item
+            github.push()
     else:
         logging.info('No changes, no commit at: {}'
                      .format(datetime.datetime.now()))
@@ -488,9 +486,8 @@ if __name__ == '__main__':
     else:
         push = False
 
-    logger = logging.getLogger()
-    logger.addHandler(logging.StreamHandler())
     if args.logstash:
+        logger = logging.getLogger()
         import logstash
         host, port = args.logstash.split(':')
         logger.addHandler(logstash.TCPLogstashHandler(host=host,
