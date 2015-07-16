@@ -8,7 +8,6 @@ import logging
 import os
 import re
 
-from cryptography.fernet import Fernet, InvalidToken
 from git import Repo
 from git.exc import GitCommandError
 from git.util import rmtree
