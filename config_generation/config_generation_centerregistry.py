@@ -259,40 +259,54 @@ def _manage_creg_icinga_contacts():
                   contacts)
     return contacts
 
+def _extract_contact(contact_id, contacts, icinga_contacts):
+    from os import getcwd
 
-def _get_site_contacts_list(centre, contacts):
+    contact_name = icinga_contacts[contact_id]['name_icinga']
+
+    if contact_name:
+        # Contact is already in Icinga.
+        config_contact = \
+            Model.Contact.objects.get_by_shortname(contact_name)
+        config_contact.set_attribute('email', contacts[contact]['email'])
+    else:
+        # Contact not in Icinga: add him/her.
+        contact_name = contacts[contact_id]['name']
+        icinga_contacts[contact_id]['name_icinga'] = contact_name
+        config_contact = \
+            Model.Contact(contact_name=contact_name,
+                          use='generic-contact',
+                          email=contacts[contact]['email'],
+                          filename='{cwd:s}/configuration/configuration/pynag/'
+                                   'contacts.cfg'.format(cwd=getcwd()))
+    config_contact.save()
+    contacts.append(contact_name)
+
+    return contacts
+
+
+def _get_site_contacts_list(centre, icinga_contacts):
     """
-    extract the monitoring contacts from creg per centre, look if we have
-    them already in icinga. If not, add them .
+    Extract all contacts from the Centre Registry that should be notified about a given centre's services.
+    If we do not have them in Icinga already, add them.
+
     :param centre: dict
-    :param contacts: dict (that are already in icinga)
+    :param icinga_contacts: dict (already in Icinga)
     :return: string (containing concatenated contacts)
     """
-    contact_list = list()
-    if centre['fields']['monitoring_contacts']:
-        for contact in centre['fields']['monitoring_contacts']:
-            # contact is already in icinga
-            if contacts[contact]['name_icinga']:
-                contact_name = contacts[contact]['name_icinga']
-                config_contact = \
-                    Model.Contact.objects.get_by_shortname(contact_name)
-                config_contact.set_attribute('email',
-                                             contacts[contact]['email'])
-            # contact not in icinga, add him
-            else:
-                contact_name = contacts[contact]['name']
-                contacts[contact]['name_icinga'] = contacts[contact]['name']
-                config_contact = Model.Contact(
-                    contact_name=contact_name,
-                    use='generic-contact',
-                    email=contacts[contact]['email'],
-                    filename='{}/configuration/configuration'
-                             '/pynag/contacts.cfg'.format(os.getcwd()))
-            config_contact.save()
-            contact_list.append(contact_name)
+    contacts = list()
+    for contact_id in centre['fields']['monitoring_contacts']:
+        contact_list = _extract_contact(contact_id=contact_id,
+                                        contacts=contacts,
+                                        icinga_contacts=icinga_contacts)
 
-    site_contacts = ",".join(contact_list).encode('latin-1')
-    return site_contacts if site_contacts != '' else contacts['dummy']['name']
+    tech_contact_id = centre['fields']['technical_contact']
+    contacts = _extract_contact(contact_id=tech_contact_id,
+                                contacts=contacts,
+                                icinga_contacts=icinga_contacts)
+
+    site_contacts = ','.join(contacts).encode('latin-1')
+    return site_contacts or icinga_contacts['dummy']['name']
 
 
 def _move_objekt_to_siteconfig(nagios_object, filename):
@@ -352,11 +366,11 @@ def _create_config_from_centerregistry():
             config_host.set_attribute('use', use)
 
             site_contacts = _get_site_contacts_list(centre=centre,
-                                                    contacts=contacts)
+                                                    icinga_contacts=contacts)
             config_host.set_attribute('contacts', site_contacts)
             config_host.save()
 
-            # create servicegroup for site and for centerregistry services per
+            # create servicegroup for site and for Centre Registry services per
             for item in ['', '_centerregistry']:
                 try:
                     config_servicegroup = \
@@ -410,7 +424,7 @@ if __name__ == '__main__':
                         help="log everything (in addition) to logstash "
                              ", give host:port")
     parser.add_argument("--push",
-                        help="push repo to github",
+                        help="push repo to GitHub",
                         action="store_true")
     args = parser.parse_args()
 
@@ -419,10 +433,7 @@ if __name__ == '__main__':
     else:
         logging.basicConfig(format='%(message)s', level=logging.INFO)
 
-    if args.push:
-        push = True
-    else:
-        push = False
+    push = args.push
 
     if args.logstash:
         logger = logging.getLogger()

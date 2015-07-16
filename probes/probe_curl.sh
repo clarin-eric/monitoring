@@ -10,7 +10,6 @@ trap 'rm -vf "${temp_data_file_path}" ; $saved_traps' 'EXIT' 'INT' 'TERM' 'HUP'
 ##
 ## Private functions
 ##
-##
 _probe_curl_http_head() {
     # HTTP HEAD request.
     # $1: Full URL.
