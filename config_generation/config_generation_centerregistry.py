@@ -60,46 +60,6 @@ def _get_input_via_http(url, username='', password=''):
                                                           response.status))
 
 
-def _encrypt(token, string):
-    """
-    encrypt a string via Fernet encryption using a token.
-    :param token: string
-    :param string: string
-    :return: string (encrypted)
-    """
-    if _is_encrypted(string):
-        return string
-    else:
-        return Fernet(token).encrypt(bytes(string))
-
-
-def _is_encrypted(string):
-    """
-    test whether a string starts with the Fernet version string
-    :param string: string
-    :return: boolean
-    """
-    # are we already encrypted?
-    if string.startswith('gAAAAA'):
-        return True
-    else:
-        return False
-
-
-def _decrypt(token, string):
-    """
-    decrypt a string via Fernet and token
-    :param token: string
-    :param string: string
-    :return: string (decrypted)
-    """
-    try:
-        string = Fernet(token).decrypt(bytes(string))
-    except InvalidToken:
-        logging.info('String not encrypted, returning: %s', string)
-    return string
-
-
 def _fetch_centerregistry(key):
     """
     fetch centerregistry, store content globally as dict
@@ -280,7 +240,7 @@ def _manage_creg_icinga_contacts():
             'email': contact['fields']['email_address']}
     contacts = tmp_contact_list
 
-    # which contacts are available in icinga? encrypt them if they are not
+    # which contacts are available in icinga?
     available_contacts = dict()
     for contact in Model.Contact.objects.all:
         # only modify registered contacts, unregistered contacts are templates.
@@ -305,7 +265,7 @@ def _manage_creg_icinga_contacts():
 def _get_site_contacts_list(centre, contacts):
     """
     extract the monitoring contacts from creg per centre, look if we have
-    them already in icinga. If not, add them encrypted.
+    them already in icinga. If not, add them .
     :param centre: dict
     :param contacts: dict (that are already in icinga)
     :return: string (containing concatenated contacts)
