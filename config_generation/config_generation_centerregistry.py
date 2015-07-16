@@ -285,30 +285,18 @@ def _manage_creg_icinga_contacts():
     for contact in Model.Contact.objects.all:
         # only modify registered contacts, unregistered contacts are templates.
         if str(contact.get_attribute('register')) != '0':
-            if not _is_encrypted(contact.get_attribute('contact_name')):
-                contact.rename(_encrypt(CONFIG['token'],
-                                        contact.get_attribute('contact_name')))
-                contact.set_attribute('email',
-                                      _encrypt(CONFIG['token'],
-                                               contact.get_attribute('email')))
-                contact.save()
-            available_contacts[
-                _decrypt(CONFIG['token'],
-                         contact.get_attribute('contact_name'))] = \
+            available_contacts[contact.get_attribute('contact_name')] = \
                 {'name': contact.get_attribute('contact_name'),
                  'email': contact.get_attribute('email')}
-    contacts['dummy'] = available_contacts[_decrypt(CONFIG['token'], 'dummy')]
+    contacts['dummy'] = available_contacts['dummy']
 
     # store contacts available in icinga to corresponding centerregistry one
     for contact in contacts.keys():
         if contacts[contact]['name'] in available_contacts.keys():
-            contacts[contact]['name_encrypted'] = \
+            contacts[contact]['name_icinga'] = \
                 available_contacts[contacts[contact]['name']]['name']
-            contacts[contact]['email_encrypted'] = \
-                available_contacts[contacts[contact]['name']]['email']
         else:
-            contacts[contact]['name_encrypted'] = False
-            contacts[contact]['email_encrypted'] = False
+            contacts[contact]['name_icinga'] = False
     logging.debug("Contacts from creg, with local representation: %s",
                   contacts)
     return contacts
@@ -326,30 +314,24 @@ def _get_site_contacts_list(centre, contacts):
     if centre['fields']['monitoring_contacts']:
         for contact in centre['fields']['monitoring_contacts']:
             # contact is already in icinga
-            if contacts[contact]['name_encrypted']:
-                contact_name = contacts[contact]['name_encrypted']
-                if _decrypt(
-                        CONFIG['token'],
-                        contacts[contact]['email_encrypted']) != \
-                        contacts[contact]['email']:
-                    contacts[contact]['email_encrypted'] = \
-                        _encrypt(CONFIG['token'], contacts[contact]['email'])
+            if contacts[contact]['name_icinga']:
+                contact_name = contacts[contact]['name_icinga']
                 config_contact = \
                     Model.Contact.objects.get_by_shortname(contact_name)
-                config_contact.set_attribute(
-                    'email',
-                    contacts[contact]['email_encrypted'])
+                config_contact.set_attribute('email',
+                                             contacts[contact]['email'])
+            # contact not in icinga, add him
             else:
-                contacts[contact]['name_encrypted'] = \
-                    _encrypt(CONFIG['token'], contacts[contact]['name'])
-                contacts[contact]['email_encrypted'] = \
-                    _encrypt(CONFIG['token'], contacts[contact]['email'])
+                contact_name = contacts[contact]['name']
+                contacts[contact]['name_icinga'] = contacts[contact]['name']
                 config_contact = Model.Contact(
-                    contact_name=contacts[contact]['name_encrypted'],
+                    contact_name=contact_name,
                     use='generic-contact',
-                    email=contacts[contact]['email_encrypted'])
+                    email=contacts[contact]['email'],
+                    filename='{}/configuration/configuration'
+                             '/pynag/contacts.cfg'.format(os.getcwd()))
             config_contact.save()
-            contact_list.append(contacts[contact]['name_encrypted'])
+            contact_list.append(contact_name)
 
     site_contacts = ",".join(contact_list).encode('latin-1')
     return site_contacts if site_contacts != '' else contacts['dummy']['name']
