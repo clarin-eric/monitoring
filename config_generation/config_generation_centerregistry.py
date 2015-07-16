@@ -14,7 +14,6 @@ from git.util import rmtree
 from pynag import Parsers, Model
 
 GIT = True
-CONFIG = None
 FETCHED = False
 
 REGISTRY = {
@@ -319,8 +318,6 @@ def _create_config_from_centerregistry():
 
     :return:
     """
-    global CONFIG
-    CONFIG = _load_script_config('centerregistry')
     _load_icinga_config('configuration/icinga.cfg')
     if _fetch_centerregistry('Centre') and _fetch_centerregistry('Contact'):
         oai_success = _fetch_centerregistry('OAIPMHEndpoint')
