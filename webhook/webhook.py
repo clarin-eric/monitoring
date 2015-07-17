@@ -88,9 +88,10 @@ if __name__ == '__main__':
     config = _get_config()
     token = _calculate_hash(config)
     # hmac compare_digest only available since 2.7.7 and 3.3
-    if (sys.version_info.major == 2 and sys.version_info.minor <= 7
-        and sys.version_info.micro < 7) or \
-            (sys.version_info.major == 3 and sys.version_info.minor < 3):
+    major = sys.version_info.major
+    minor = sys.version_info.minor
+    micro = sys.version_info.micro
+    if (major == 2 and minor <= 7 and micro < 7) or (major == 3 and minor < 3):
         compare_func = _compare
     else:
         import hmac
