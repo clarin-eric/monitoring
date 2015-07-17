@@ -73,7 +73,7 @@ probe_handle_json() {
     # $1: Full URL.
     # $2: Root directory path for curl.format and other data files.
     # $3: Optional extra command-line parameter(s) for curl.
-    _probe_curl_http_get "${1}" "${2}" 'application/xml' $3 &&
+    _probe_curl_http_get "${1}" "${2}" 'application/json' $3 &&
     python3 -I -c 'from json import load; from sys import stdin, exit; json_obj=load(stdin); exit(0 if json_obj["responseCode"] == 1 else 2)' <"${temp_data_file_path}" 2>&1 ||
     return 2 ;
 }
