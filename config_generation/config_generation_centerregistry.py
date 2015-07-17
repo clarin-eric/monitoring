@@ -1,6 +1,5 @@
 # coding=utf-8
 import argparse
-import ConfigParser
 import datetime
 import httplib2
 import json
@@ -13,9 +12,6 @@ from git.exc import GitCommandError
 from git.util import rmtree
 from pynag import Parsers, Model
 
-GIT = True
-FETCHED = False
-
 REGISTRY = {
     'Centre': None,
     'Contact': None,
@@ -26,36 +22,6 @@ SERVICE_URL_MAPPER = {
     'CQL': 'FCSEndpoint',
     'OAI': 'OAIPMHEndpoint',
 }
-
-
-def _load_script_config(section='default'):
-    """
-    simply load a config file and save it as dict
-    :param section:
-    :return:
-    """
-    config = ConfigParser.SafeConfigParser()
-    config.read('config.ini')
-    return dict(config.items(section=section))
-
-
-def _get_input_via_http(url, username='', password=''):
-    """
-    fetch some url
-    :param url: string
-    :param username: string
-    :param password: string
-    :return: the content
-    """
-    conn = httplib2.Http()
-    conn.add_credentials(username, password)
-    response, content = conn.request(url)
-    if response.status == 200:
-        logging.debug('was able to fetch ' + url)
-        return content
-    else:
-        raise IOError('response status from {}:{}'.format(url,
-                                                          response.status))
 
 
 def _fetch_centerregistry(key):
@@ -95,7 +61,7 @@ def _regexp_on_url(url):
     host = filtered.group(2)
     if ':' in filtered.group(2):
         host, port = filtered.group(2).split(':')
-    elif filtered.group(1) == 'https':
+    elif filtered.group(1) == 'https' and ':' not in filtered.group(2):
         port = 443
     logging.debug('schema: {} host: {} url: {} port: {}'.format(
         filtered.group(1), host, filtered.group(3), str(port)))
@@ -132,7 +98,9 @@ def _load_git_repo(repourl, repopath):
     return repo
 
 
-def _push_and_delete_git_repo(repo, push=False):
+def _push_and_delete_git_repo(repo,
+                              push_repo=False,
+                              dont_remove_repo=False):
     """
     add new files, commit, push and delete the local repo.
     :param repo: Repo (GitPython Repo object)
@@ -146,14 +114,15 @@ def _push_and_delete_git_repo(repo, push=False):
                   'configuration: {}'.format(datetime.datetime.now())
         repo.index.commit(message)
         github = repo.remote('origin')
-        if push:
+        if push_repo:
             logging.info('Push to git repo at: {}'
                          .format(datetime.datetime.now()))
             github.push()
     else:
         logging.info('No changes, no commit at: {}'
                      .format(datetime.datetime.now()))
-    rmtree(repo.working_dir)
+    if not dont_remove_repo:
+        rmtree(repo.working_dir)
 
 
 def _create_centerregistry_services(host_name,
@@ -221,38 +190,39 @@ def _create_centerregistry_services(host_name,
         config_service.save()
 
 
-def _manage_creg_icinga_contacts():
+def _merge_centerregistry_icinga_contacts():
     """
-    we have contacts with email/eppn from creg and we have already
-    stored contacts in icinga. merge them
+    we have contacts with email/eppn from Center Registry and we have already
+    stored contacts in icinga. Merge them.
     :rtype : dict
     """
-    # contacts we got from creg
-    tmp_contact_list = dict()
+    # contacts from Center Registry
+    creg_contacts = dict()
     for contact in REGISTRY['Contact']:
-        name = contact['fields']['edupersonprincipalname'] \
-            if contact['fields']['edupersonprincipalname'] else \
-            contact['fields']['email_address']
-        tmp_contact_list[contact['pk']] = {
+        if contact['fields']['edupersonprincipalname']:
+            name = contact['fields']['edupersonprincipalname']
+        else:
+            name = contact['fields']['email_address']
+        creg_contacts[contact['pk']] = {
             'name': name,
             'email': contact['fields']['email_address']}
-    contacts = tmp_contact_list
+    contacts = creg_contacts
 
     # which contacts are available in icinga?
-    available_contacts = dict()
+    icinga_contacts = dict()
     for contact in Model.Contact.objects.all:
         # only modify registered contacts, unregistered contacts are templates.
         if str(contact.get_attribute('register')) != '0':
-            available_contacts[contact.get_attribute('contact_name')] = \
+            icinga_contacts[contact.get_attribute('contact_name')] = \
                 {'name': contact.get_attribute('contact_name'),
                  'email': contact.get_attribute('email')}
-    contacts['dummy'] = available_contacts['dummy']
 
     # store contacts available in icinga to corresponding centerregistry one
-    for contact in contacts.keys():
-        if contacts[contact]['name'] in available_contacts.keys():
+    contacts['dummy'] = icinga_contacts['dummy']
+    for contact in list(contacts.keys()):
+        if contacts[contact]['name'] in list(icinga_contacts.keys()):
             contacts[contact]['name_icinga'] = \
-                available_contacts[contacts[contact]['name']]['name']
+                icinga_contacts[contacts[contact]['name']]['name']
         else:
             contacts[contact]['name_icinga'] = False
     logging.debug("Contacts from creg, with local representation: %s",
@@ -260,30 +230,27 @@ def _manage_creg_icinga_contacts():
     return contacts
 
 
-def _extract_contact(contact_id, contacts, icinga_contacts):
-    from os import getcwd
-
+def _extract_contact(contact_id, icinga_contacts):
     contact_name = icinga_contacts[contact_id]['name_icinga']
 
     if contact_name:
         # Contact is already in Icinga.
         config_contact = \
             Model.Contact.objects.get_by_shortname(contact_name)
-        config_contact.set_attribute('email', contacts[contact_name]['email'])
+        config_contact.set_attribute('email',
+                                     icinga_contacts[contact_id]['email'])
     else:
         # Contact not in Icinga: add him/her.
-        contact_name = contacts[contact_id]['name']
+        contact_name = icinga_contacts[contact_id]['name']
         icinga_contacts[contact_id]['name_icinga'] = contact_name
         config_contact = \
             Model.Contact(contact_name=contact_name,
                           use='generic-contact',
-                          email=contacts[contact_name]['email'],
+                          email=icinga_contacts[contact_id]['email'],
                           filename='{cwd:s}/configuration/configuration/pynag/'
-                                   'contacts.cfg'.format(cwd=getcwd()))
+                                   'contacts.cfg'.format(cwd=os.getcwd()))
     config_contact.save()
-    contacts.append(contact_name)
-
-    return contacts
+    return contact_name
 
 
 def _get_site_contacts_list(centre, icinga_contacts):
@@ -297,17 +264,17 @@ def _get_site_contacts_list(centre, icinga_contacts):
     """
     contacts = list()
     for contact_id in centre['fields']['monitoring_contacts']:
-        contact_list = _extract_contact(contact_id=contact_id,
-                                        contacts=contacts,
-                                        icinga_contacts=icinga_contacts)
+        contacts.append(_extract_contact(contact_id=contact_id,
+                                         icinga_contacts=icinga_contacts))
 
     tech_contact_id = centre['fields']['technical_contact']
-    contacts = _extract_contact(contact_id=tech_contact_id,
-                                contacts=contacts,
-                                icinga_contacts=icinga_contacts)
+    contacts.append(_extract_contact(contact_id=tech_contact_id,
+                                     icinga_contacts=icinga_contacts))
 
     site_contacts = ','.join(contacts).encode('latin-1')
-    return site_contacts or icinga_contacts['dummy']['name']
+    return site_contacts if site_contacts != '' else contacts['dummy']['name']
+    # '' is not None, so "or" should not work here?
+    # return site_contacts or icinga_contacts['dummy']['name']
 
 
 def _move_objekt_to_siteconfig(nagios_object, filename):
@@ -337,7 +304,7 @@ def _create_config_from_centerregistry():
     if _fetch_centerregistry('Centre') and _fetch_centerregistry('Contact'):
         oai_success = _fetch_centerregistry('OAIPMHEndpoint')
         cql_success = _fetch_centerregistry('FCSEndpoint')
-        contacts = _manage_creg_icinga_contacts()
+        contacts = _merge_centerregistry_icinga_contacts()
 
         check_command = 'check_dummy'
         use = 'custom-active-host'
@@ -405,7 +372,7 @@ def _create_config_from_centerregistry():
                                                 filename=filename)
 
 
-def run(push=False):
+def run(push_repo=False, dont_remove_repo=False):
     """
     get repository, modify config, push repo
     :return:
@@ -413,7 +380,9 @@ def run(push=False):
     repo = _load_git_repo('git@github.com:clarin-eric/monitoring.git',
                           'configuration')
     _create_config_from_centerregistry()
-    _push_and_delete_git_repo(repo=repo, push=push)
+    _push_and_delete_git_repo(repo=repo,
+                              push_repo=push_repo,
+                              dont_remove_repo=dont_remove_repo)
 
 
 if __name__ == '__main__':
@@ -427,6 +396,10 @@ if __name__ == '__main__':
     parser.add_argument("--push",
                         help="push repo to GitHub",
                         action="store_true")
+
+    parser.add_argument("--nocleanup",
+                        help="don't remove repo after push",
+                        action="store_true")
     args = parser.parse_args()
 
     if args.debug:
@@ -435,6 +408,7 @@ if __name__ == '__main__':
         logging.basicConfig(format='%(message)s', level=logging.INFO)
 
     push = args.push
+    remove = args.nocleanup
 
     if args.logstash:
         logger = logging.getLogger()
@@ -443,4 +417,4 @@ if __name__ == '__main__':
         logger.addHandler(logstash.TCPLogstashHandler(host=host,
                                                       port=int(port),
                                                       version=1))
-    run(push=push)
+    run(push_repo=push, dont_remove_repo=remove)
