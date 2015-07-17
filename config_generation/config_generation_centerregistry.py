@@ -259,6 +259,7 @@ def _manage_creg_icinga_contacts():
                   contacts)
     return contacts
 
+
 def _extract_contact(contact_id, contacts, icinga_contacts):
     from os import getcwd
 
@@ -268,7 +269,7 @@ def _extract_contact(contact_id, contacts, icinga_contacts):
         # Contact is already in Icinga.
         config_contact = \
             Model.Contact.objects.get_by_shortname(contact_name)
-        config_contact.set_attribute('email', contacts[contact]['email'])
+        config_contact.set_attribute('email', contacts[contact_name]['email'])
     else:
         # Contact not in Icinga: add him/her.
         contact_name = contacts[contact_id]['name']
@@ -276,7 +277,7 @@ def _extract_contact(contact_id, contacts, icinga_contacts):
         config_contact = \
             Model.Contact(contact_name=contact_name,
                           use='generic-contact',
-                          email=contacts[contact]['email'],
+                          email=contacts[contact_name]['email'],
                           filename='{cwd:s}/configuration/configuration/pynag/'
                                    'contacts.cfg'.format(cwd=getcwd()))
     config_contact.save()
@@ -287,8 +288,8 @@ def _extract_contact(contact_id, contacts, icinga_contacts):
 
 def _get_site_contacts_list(centre, icinga_contacts):
     """
-    Extract all contacts from the Centre Registry that should be notified about a given centre's services.
-    If we do not have them in Icinga already, add them.
+    Extract all contacts from the Centre Registry that should be notified about
+    a given centre's services. If we do not have them in Icinga already, add em
 
     :param centre: dict
     :param icinga_contacts: dict (already in Icinga)
