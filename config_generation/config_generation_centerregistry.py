@@ -12,15 +12,11 @@ from git.exc import GitCommandError
 from git.util import rmtree
 from pynag import Parsers, Model
 
-REGISTRY = {
-    'Centre': None,
-    'Contact': None,
-    'OAIPMHEndpoint': None,
-    'FCSEndpoint': None, }
+REGISTRY = dict()
 
 SERVICE_URL_MAPPER = {
     'CQL': 'FCSEndpoint',
-    'OAI': 'OAIPMHEndpoint',
+    'OAI': 'OAIPMHEndpoint'
 }
 
 
@@ -30,13 +26,12 @@ def _fetch_centerregistry(key):
     :param key: string (containing the url endpoint)
     :return: boolean
     """
-    if not REGISTRY[key]:
-        http_header, content = httplib2.Http().request(
-            'https://centres.clarin.eu/api/model/{}'.format(key))
-        if http_header['status'] == '200':
-            REGISTRY[key] = json.loads(content)
-            return True
-        return False
+    http_header, content = httplib2.Http().request(
+        'https://centres.clarin.eu/api/model/{}'.format(key))
+    if http_header['status'] == '200':
+        REGISTRY[key] = json.loads(content)
+        return True
+    return False
 
 
 def _load_icinga_config(filepath):
@@ -413,8 +408,8 @@ if __name__ == '__main__':
     if args.logstash:
         logger = logging.getLogger()
         import logstash
-        host, port = args.logstash.split(':')
-        logger.addHandler(logstash.TCPLogstashHandler(host=host,
-                                                      port=int(port),
+        ls_host, ls_port = args.logstash.split(':')
+        logger.addHandler(logstash.TCPLogstashHandler(host=ls_host,
+                                                      port=int(ls_port),
                                                       version=1))
     run(push_repo=push, dont_remove_repo=remove)
