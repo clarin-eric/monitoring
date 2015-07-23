@@ -270,7 +270,6 @@ def _get_site_contacts_list(centre, icinga_contacts):
 
     return site_contacts or contacts['dummy']['name']
     # https://docs.python.org/2/library/stdtypes.html#truth-value-testing
-    # return site_contacts or icinga_contacts['dummy']['name']
 
 
 def _move_objekt_to_siteconfig(nagios_object, filename):
