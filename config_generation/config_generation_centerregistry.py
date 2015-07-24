@@ -1,15 +1,11 @@
 # coding=utf-8
-import argparse
-import datetime
+
 import httplib2
 import json
 import logging
-import os
-import re
 
 from git import Repo
 from git.exc import GitCommandError
-from git.util import rmtree
 from pynag import Parsers, Model
 
 REGISTRY = dict()
@@ -20,18 +16,20 @@ SERVICE_URL_MAPPER = {
 }
 
 
-def _fetch_centerregistry(key):
+def _fetch_centre_registry(key):
     """
-    fetch centerregistry, store content globally as dict
+    Fetch data from Centre Registry, store it globally as dict.
+
     :param key: string (containing the url endpoint)
     :return: boolean
     """
     http_header, content = httplib2.Http().request(
-        'https://centres.clarin.eu/api/model/{}'.format(key))
+        'https://centres.clarin.eu/api/model/{model:s}'.format(model=key))
     if http_header['status'] == '200':
         REGISTRY[key] = json.loads(content)
         return True
-    return False
+    else:
+        return False
 
 
 def _load_icinga_config(filepath):
@@ -46,36 +44,40 @@ def _load_icinga_config(filepath):
     config.parse()
 
 
-def _regexp_on_url(url):
-    """
-    Input: string ( urlusing the format protocol://host[:port]/url)
-    Output: list withprotocol, host, port and url
-    """
-    filtered = re.search(r'^(.*)://([a-z0-9\-:.]+)?(.*)$', url)
-    port = 80
-    host = filtered.group(2)
-    if ':' in filtered.group(2):
-        host, port = filtered.group(2).split(':')
-    elif filtered.group(1) == 'https' and ':' not in filtered.group(2):
-        port = 443
-    logging.debug('schema: {} host: {} url: {} port: {}'.format(
-        filtered.group(1), host, filtered.group(3), str(port)))
-    return [filtered.group(1), host, filtered.group(3), str(port)]
+def _parse_url(url):
+    from urlparse import urlparse
+
+    parsed_url = urlparse(url)
+    components = parsed_url.netloc.split(':')
+
+    host = components[0]
+    if len(components) > 2:
+        port = components[1]
+    else:
+        if parsed_url.scheme == 'http':
+            port = 80
+        elif parsed_url.scheme == 'https':
+            port = 443
+
+    return parsed_url.scheme, host, parsed_url.path + parsed_url.params + parsed_url.query + parsed_url.fragment, port
 
 
-def _replace_umlauts(text):
+def _transliterate_to_ascii(text):
     """
-    because pynag is not able to write utf8 we have to take care of that
+    Helper function to transliterate UTF-8 to ASCII.
+
     :param text: string
     :return: string
     """
-    umlauts = [(u'ü', u'ue'), (u'ä', u'ae'), (u'ö', u'oe'), (u'ß', u'ss')]
-    for item in umlauts:
-        text = text.replace(item[0], item[1])
-    return text
+    from subprocess import Popen, PIPE
+
+    process = Popen(['iconv', '-f', 'utf-8', '-t' 'ascii//TRANSLIT'], stdout=PIPE, stdin=PIPE)
+    stdoutdata, _ = process.communicate(text.encode('utf-8'))
+
+    return stdoutdata.encode(encoding='utf-8')
 
 
-def _load_git_repo(repourl, repopath):
+def _load_git_repo(repourl, repopath, pull_repo=True):
     """
     load our repo from github or, if its there, get the updates.
     If there is a directory under repopath that is not a git repo, crash.
@@ -88,8 +90,9 @@ def _load_git_repo(repourl, repopath):
     except GitCommandError:
         logging.error('Repository already there')
         repo = Repo(repopath)
-        github = repo.remote('origin')
-        github.pull()
+        if pull_repo:
+            github = repo.remote('origin')
+            github.pull()
     return repo
 
 
@@ -101,23 +104,31 @@ def _push_and_delete_git_repo(repo,
     :param repo: Repo (GitPython Repo object)
     :return:
     """
+    from datetime import datetime
+    from os import unlink
+    from os.path import islink
+    from shutil import rmtree
+
     if repo.is_dirty(untracked_files=True):
         files = repo.untracked_files
         files.append('*')
         repo.index.add(files)
         message = 'Information from CenterRegistry fetched and changed in ' \
-                  'configuration: {}'.format(datetime.datetime.now())
+                  'configuration: {}'.format(datetime.now())
         repo.index.commit(message)
         github = repo.remote('origin')
         if push_repo:
             logging.info('Push to git repo at: {}'
-                         .format(datetime.datetime.now()))
+                         .format(datetime.now()))
             github.push()
     else:
         logging.info('No changes, no commit at: {}'
-                     .format(datetime.datetime.now()))
+                     .format(datetime.now()))
     if not dont_remove_repo:
-        rmtree(repo.working_dir)
+        if islink(repo.working_dir):
+            unlink(repo.working_dir)
+        else:
+            rmtree(repo.working_dir)
 
 
 def _create_centerregistry_services(host_name,
@@ -140,7 +151,7 @@ def _create_centerregistry_services(host_name,
             endpoints.append(item['fields']['uri'])
     endpoints.sort()
     for item in endpoints:
-        probeargs = _regexp_on_url(item)
+        probeargs = _parse_url(item)
         service_description = '{}@{}@{}{}'.format(service_type,
                                                   host_name,
                                                   probeargs[1],
@@ -175,7 +186,7 @@ def _create_centerregistry_services(host_name,
                 check_command=check_command,
                 use='custom-active-service,srv-pnp',
                 host_name=host_name,
-                servicegroups=host_name + '_centerregistry',
+                servicegroups=host_name + '_centerregistry', # TODO: fix spelling
                 contacts=site_contacts,
                 filename=filename)
         logging.debug('%s service: %s on host: %s',
@@ -187,8 +198,8 @@ def _create_centerregistry_services(host_name,
 
 def _merge_centerregistry_icinga_contacts():
     """
-    we have contacts with email/eppn from Center Registry and we have already
-    stored contacts in icinga. Merge them.
+    We have contacts with e-mail address/ePPN from Centre Registry and we have already
+    stored contacts in Icinga. Merge them.
     :rtype : dict
     """
     # contacts from Center Registry
@@ -226,6 +237,8 @@ def _merge_centerregistry_icinga_contacts():
 
 
 def _extract_contact(contact_id, icinga_contacts):
+    from os import getcwd
+
     contact_name = icinga_contacts[contact_id]['name_icinga']
 
     if contact_name:
@@ -243,7 +256,7 @@ def _extract_contact(contact_id, icinga_contacts):
                           use='generic-contact',
                           email=icinga_contacts[contact_id]['email'],
                           filename='{cwd:s}/configuration/configuration/pynag/'
-                                   'contacts.cfg'.format(cwd=os.getcwd()))
+                                   'contacts.cfg'.format(cwd=getcwd()))
     config_contact.save()
     return contact_name
 
@@ -294,24 +307,26 @@ def _create_config_from_centerregistry():
 
     :return:
     """
+    from os import getcwd
+
     _load_icinga_config('configuration/icinga.cfg')
-    if _fetch_centerregistry('Centre') and _fetch_centerregistry('Contact'):
-        oai_success = _fetch_centerregistry('OAIPMHEndpoint')
-        cql_success = _fetch_centerregistry('FCSEndpoint')
+    if _fetch_centre_registry('Centre') and _fetch_centre_registry('Contact'):
+        oai_success = _fetch_centre_registry('OAIPMHEndpoint')
+        cql_success = _fetch_centre_registry('FCSEndpoint')
         contacts = _merge_centerregistry_icinga_contacts()
 
         check_command = 'check_dummy'
         use = 'custom-active-host'
         for iterator, centre in enumerate(REGISTRY['Centre']):
             host_name = \
-                str(_replace_umlauts(centre['fields']['shorthand'].strip()))
+                str(_transliterate_to_ascii(centre['fields']['shorthand'].strip()))
             filename = \
-                '{}/configuration/configuration/{}.cfg'.format(os.getcwd(),
+                '{}/configuration/configuration/{}.cfg'.format(getcwd(),
                                                                host_name)
             _LAT = str(centre['fields']['latitude'].strip())
             _LONG = str(centre['fields']['longitude'].strip())
             display_name = \
-                str(_replace_umlauts(centre['fields']['name'].strip()))
+                str(_transliterate_to_ascii(centre['fields']['name'].strip()))
             try:
                 config_host = Model.Host.objects.get_by_shortname(host_name)
                 config_host = _move_objekt_to_siteconfig(config_host, filename)
@@ -327,7 +342,11 @@ def _create_config_from_centerregistry():
             config_host.set_attribute('display_name', display_name)
             config_host.set_attribute('use', use)
 
-            site_contacts = _get_site_contacts_list(centre=centre,
+            # A hack to make sure sysops@clarin.eu always receives notifications.
+            # Service escalations are not a workable alternative for us. Only migration
+            # to Icinga 2 will make this cleaner and easier.
+            site_contacts = 'sysops@clarin.eu,' + \
+                            _get_site_contacts_list(centre=centre,
                                                     icinga_contacts=contacts)
             config_host.set_attribute('contacts', site_contacts)
             config_host.save()
@@ -366,13 +385,14 @@ def _create_config_from_centerregistry():
                                                 filename=filename)
 
 
-def run(push_repo=False, dont_remove_repo=False):
+def run(push_repo=False, pull_repo=True, dont_remove_repo=False):
     """
     get repository, modify config, push repo
     :return:
     """
     repo = _load_git_repo('git@github.com:clarin-eric/monitoring.git',
-                          'configuration')
+                          'configuration',
+                          pull_repo=pull_repo)
     _create_config_from_centerregistry()
     _push_and_delete_git_repo(repo=repo,
                               push_repo=push_repo,
@@ -380,6 +400,8 @@ def run(push_repo=False, dont_remove_repo=False):
 
 
 if __name__ == '__main__':
+    import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug",
                         help="get debug output",
@@ -388,9 +410,11 @@ if __name__ == '__main__':
                         help="log everything (in addition) to logstash "
                              ", give host:port")
     parser.add_argument("--push",
-                        help="push repo to GitHub",
+                        help="push Git repository",
                         action="store_true")
-
+    parser.add_argument("--nopull",
+                        help="Don't pull Git repository",
+                        action="store_false")
     parser.add_argument("--nocleanup",
                         help="don't remove repo after push",
                         action="store_true")
@@ -403,6 +427,7 @@ if __name__ == '__main__':
 
     push = args.push
     remove = args.nocleanup
+    pull_repo = args.nopull
 
     if args.logstash:
         logger = logging.getLogger()
@@ -411,4 +436,4 @@ if __name__ == '__main__':
         logger.addHandler(logstash.TCPLogstashHandler(host=ls_host,
                                                       port=int(ls_port),
                                                       version=1))
-    run(push_repo=push, dont_remove_repo=remove)
+    run(push_repo=push, pull_repo=pull_repo, dont_remove_repo=remove)
