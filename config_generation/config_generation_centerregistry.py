@@ -51,7 +51,7 @@ def _parse_url(url):
     components = parsed_url.netloc.split(':')
 
     host = components[0]
-    if len(components) > 2:
+    if len(components) > 1:
         port = components[1]
     else:
         if parsed_url.scheme == 'http':
