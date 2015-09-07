@@ -74,8 +74,10 @@ if __name__ == '__main__':
 
     if args.debug:
         logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+        debug=True
     else:
         logging.basicConfig(format='%(message)s', level=logging.INFO)
+        debug=False
     logger = logging.getLogger()
     logger.addHandler(logging.StreamHandler())
     if args.logstash:
@@ -98,4 +100,4 @@ if __name__ == '__main__':
 
         compare_func = hmac.compare_digest
 
-    app.run(host='0.0.0.0', port=7010, debug=True)
+    app.run(host='0.0.0.0', port=7010, debug=debug, use_reloader=False)
