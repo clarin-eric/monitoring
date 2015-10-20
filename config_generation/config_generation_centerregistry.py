@@ -6,6 +6,7 @@ import logging
 
 from git import Repo
 from git.exc import GitCommandError
+from os import getcwd
 from pynag import Parsers, Model
 
 REGISTRY = dict()
@@ -59,7 +60,8 @@ def _parse_url(url):
         elif parsed_url.scheme == 'https':
             port = 443
 
-    return parsed_url.scheme, host, parsed_url.path + parsed_url.params + parsed_url.query + parsed_url.fragment, port
+    return parsed_url.scheme, host, parsed_url.path + parsed_url.params + \
+        parsed_url.query + parsed_url.fragment, port
 
 
 def _transliterate_to_ascii(text):
@@ -71,7 +73,8 @@ def _transliterate_to_ascii(text):
     """
     from subprocess import Popen, PIPE
 
-    process = Popen(['iconv', '-f', 'utf-8', '-t' 'ascii//TRANSLIT'], stdout=PIPE, stdin=PIPE)
+    process = Popen(['iconv', '-f', 'utf-8', '-t' 'ascii//TRANSLIT'],
+                    stdout=PIPE, stdin=PIPE)
     stdoutdata, _ = process.communicate(text.encode('utf-8'))
 
     return stdoutdata.encode(encoding='utf-8')
@@ -186,7 +189,7 @@ def _create_centerregistry_services(host_name,
                 check_command=check_command,
                 use='custom-active-service,srv-pnp',
                 host_name=host_name,
-                servicegroups=host_name + '_centerregistry', # TODO: fix spelling
+                servicegroups=host_name + '_centerregistry',
                 contacts=site_contacts,
                 filename=filename)
         logging.debug('%s service: %s on host: %s',
@@ -198,8 +201,8 @@ def _create_centerregistry_services(host_name,
 
 def _merge_centerregistry_icinga_contacts():
     """
-    We have contacts with e-mail address/ePPN from Centre Registry and we have already
-    stored contacts in Icinga. Merge them.
+    We have contacts with e-mail address/ePPN from Centre Registry and we
+    have already stored contacts in Icinga. Merge them.
     :rtype : dict
     """
     # contacts from Center Registry
@@ -237,8 +240,6 @@ def _merge_centerregistry_icinga_contacts():
 
 
 def _extract_contact(contact_id, icinga_contacts):
-    from os import getcwd
-
     contact_name = icinga_contacts[contact_id]['name_icinga']
 
     if contact_name:
@@ -307,8 +308,6 @@ def _create_config_from_centerregistry():
 
     :return:
     """
-    from os import getcwd
-
     _load_icinga_config('configuration/icinga.cfg')
     if _fetch_centre_registry('Centre') and _fetch_centre_registry('Contact'):
         oai_success = _fetch_centre_registry('OAIPMHEndpoint')
@@ -342,9 +341,10 @@ def _create_config_from_centerregistry():
             config_host.set_attribute('display_name', display_name)
             config_host.set_attribute('use', use)
 
-            # A hack to make sure sysops@clarin.eu always receives notifications.
-            # Service escalations are not a workable alternative for us. Only migration
-            # to Icinga 2 will make this cleaner and easier.
+            # A hack to make sure sysops@clarin.eu always receives
+            # notifications. Service escalations are not a workable alternative
+            # for us. Only migration to Icinga 2 will make this cleaner and
+            # easier.
             site_contacts = 'sysops@clarin.eu,' + \
                             _get_site_contacts_list(centre=centre,
                                                     icinga_contacts=contacts)
@@ -352,21 +352,34 @@ def _create_config_from_centerregistry():
             config_host.save()
 
             # create servicegroup for site and for Centre Registry services per
-            for item in ['', '_centerregistry']:
+            for item in ['_centerregistry', '']:
+                servicegroup_name = host_name + item
                 try:
                     config_servicegroup = \
                         Model.Servicegroup.objects.get_by_shortname(
-                            host_name + item)
+                            servicegroup_name)
                     config_servicegroup = \
                         _move_objekt_to_siteconfig(
                             config_servicegroup, filename)
                 except KeyError:
                     logging.debug('Adding new Servicegroup: %s',
-                                  host_name + item)
+                                  servicegroup_name)
                     config_servicegroup = Model.Servicegroup(
-                        servicegroup_name=host_name + item,
-                        alias=host_name + item,
+                        servicegroup_name=servicegroup_name,
+                        alias=servicegroup_name,
                         filename=filename)
+                current_groups = \
+                    config_servicegroup.get_attribute('servicegroup_members')
+                if not current_groups:
+                    current_groups = list()
+                else:
+                    current_groups = map(str.strip, current_groups.split(','))
+                creg_group = servicegroup_name + '_centerregistry'
+                if item is '' and creg_group not in current_groups:
+                    current_groups.append(creg_group)
+                    config_servicegroup.set_attribute(
+                        'servicegroup_members',
+                        ','.join(sorted(current_groups)))
                 config_servicegroup.save()
             # OAI
             if oai_success:
