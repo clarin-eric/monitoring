@@ -78,6 +78,16 @@ probe_handle_json() {
     return 2 ;
 }
 
+probe_central_discovery_service_json() {
+    # HTTP GET request with Handle JSON response data validation.
+    # $1: Full URL.
+    # $2: Root directory path for curl.format and other data files.
+    # $3: Optional extra command-line parameter(s) for curl.
+    _probe_curl_http_get "${1}" "${2}" 'application/json' $3 &&
+    python3 -I -c 'from json import load; from sys import stdin, exit; json_obj=load(stdin); previous_sum=962; current_sum=sum(country["count"] for country in json_obj["countries"]); exit(0 if new_sum >= old_sum else 2)' <"${temp_data_file_path}" 2>&1 ||
+    return 2 ;
+}
+
 probe_sru_endpoint() {
     # HTTP GET request with SRU XML response data validation.
     # $1: Full URL.
