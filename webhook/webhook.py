@@ -55,6 +55,7 @@ def post_hook():
             logging.info('Executing restart action at {}'.format(
                 datetime.datetime.now()))
             _restart()
+            logging.info('Successfully executed')
         else:
             logging.info('No successful build, not restarting Icinga')
         return "ok"
