@@ -105,13 +105,13 @@ probe_oai_pmh_endpoint() {
     # $3: Optional extra command-line parameter(s) for curl.
     _probe_curl_http_get "${1}?verb=Identify" "${2}" 'application/xml' $3 ;
     curl_exit_status="$?"
-    if [ $curl_exit_status -eq 22 ]; then
+    if [ "$curl_exit_status" -eq '22' ]; then
         # Check for a probable 503 response that gives a Retry-After response header: we accept this as it is.
         _probe_curl_http_head "${1}?verb=Identify" "${2}" '503' $3 |
         grep -Eio 'Retry-After: [[:digit:]]+' 2>&1 ||
         return 2 ;
     else
-        xmllint --noout --schema "$2/_OAI-PMH-all.xsd" "${temp_data_file_path}" 2>&1 ||
+        xmllint --noout --schema "$2/OAI-PMH.xsd" "${temp_data_file_path}" 2>&1 ||
         return 2 ;
     fi
 }
