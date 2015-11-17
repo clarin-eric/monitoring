@@ -101,4 +101,4 @@ if __name__ == '__main__':
 
         compare_func = hmac.compare_digest
 
-    app.run(host='0.0.0.0', port=7010, debug=debug, use_reloader=False)
+    app.run(host='0.0.0.0', port=7010, debug=debug)
