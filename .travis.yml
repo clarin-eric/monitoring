@@ -17,9 +17,9 @@ before_script:
 script:
  - docker run -v `pwd`:/etc/icinga benedicere/icinga-configtest
  - find . -name "*.py" -exec pep8 {} \;
- - nosetests --with-coverage --cover-package=config_generation,webhook,.
- - radon mi config_generation webhook .
- - radon cc config_generation webhook .
+ - nosetests --with-coverage --cover-package=config_generation,.
+ - radon mi config_generation .
+ - radon cc config_generation .
 
 notifications:
   webhooks:
