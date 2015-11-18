@@ -22,4 +22,5 @@ script:
  - radon cc config_generation webhook .
 
 notifications:
-  webhooks: http://clarin.fz-juelich.de:7010/hook/
+  webhooks:
+   - https://clarin.fz-juelich.de:7011/travis/
