@@ -46,7 +46,7 @@ _probe_curl_ldap_bind() {
     # $1: Full URL.
     # $2: Root directory path for curl.format and other data files.
     # $3: Optional extra command-line parameter(s) for curl.
-    performance_data_1=$(/usr/bin/curl --fail --netrc --output "${temp_data_file_path}" --show-error --silent --stderr "${tmp_details_file_path}" --tlsv1 --verbose --write-out "@${2}/curl.format" $3 "${1}" ; ) ;
+    performance_data_1=$(/usr/bin/curl --fail --netrc --output "${temp_data_file_path}" --show-error --silent --stderr "${tmp_details_file_path}" --tlsv1 --verbose --write-out "@${2}/curl.format" "${3}" -- "${1}" ; ) ;
     curl_exit_status="$?" ;
     details_data=$(cat "${tmp_details_file_path}" ; ) ;
     printf 'curl exit status: %d | %s\n%s %s\n\n' "${curl_exit_status}" "${performance_data_1}" "${details_data}" ;
