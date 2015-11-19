@@ -3,26 +3,24 @@ language: python
 python:
  - "2.7"
 
-before_install:
-  - sudo add-apt-repository -y ppa:formorer/icinga
-  - sudo apt-get update -qq
-  - sudo apt-get install -y --force-yes icinga-core
+sudo: required
+
+services:
+  - docker
 
 install:
   - pip install -r config_generation/requirements.txt && pip install -r config_generation/testing_requirements.txt
 
 before_script:
-  - mkdir -p lib/spool lib/rw run/icinga cache/icinga lib/icinga/spool/checkresults lib/icinga/rw log/icinga
-  - sed -i "s/\/var\///g" icinga.cfg
-  - sed -i "s/\/etc\/icinga\/resource.cfg/resource.cfg/g" icinga.cfg
   - echo -e '$USER1$=/usr/lib/icinga/plugins\n$USER3$=/etc/icinga/probes' > resource.cfg
 
 script:
- - /usr/sbin/icinga -v icinga.cfg
+ - docker run -v `pwd`:/etc/icinga benedicere/icinga-configtest
  - find . -name "*.py" -exec pep8 {} \;
- - nosetests --with-coverage --cover-package=config_generation,webhook,.
- - radon mi config_generation webhook .
- - radon cc config_generation webhook .
+ - nosetests --with-coverage --cover-package=config_generation,.
+ - radon mi config_generation .
+ - radon cc config_generation .
 
 notifications:
-  webhooks: http://clarin.fz-juelich.de:7010/hook/
+  webhooks:
+   - https://clarin.fz-juelich.de:7011/travis/
