@@ -140,7 +140,6 @@ def _create_centerregistry_services(host_name,
                                     service_type,
                                     filename):
     """
-
     :param host_name:
     :param site_contacts:
     :param centre_definition:
@@ -148,11 +147,23 @@ def _create_centerregistry_services(host_name,
     :param filename:
     :return:
     """
+    # find all service_type services for a centre, based on centre registry
     endpoints = list()
     for item in REGISTRY[SERVICE_URL_MAPPER[service_type]]:
         if item['fields']['centre'] == centre_definition['pk']:
             endpoints.append(item['fields']['uri'])
     endpoints.sort()
+
+    # find all service_type service for a centre, based on icinga
+    services = Model.Service.objects.get_all()
+    services = [item.get_shortname() for item in services]
+    site_services = set()
+    for service in services:
+        if service and host_name in service and service_type in service:
+            site_services.add(service)
+    logging.debug('ALL site services {}'.format(site_services))
+
+    # go through services and add/modify them
     for item in endpoints:
         probeargs = _parse_url(item)
         service_description = '{}@{}@{}{}'.format(service_type,
@@ -164,8 +175,6 @@ def _create_centerregistry_services(host_name,
                                                       probeargs[1],
                                                       probeargs[2],
                                                       probeargs[3])
-        services = Model.Service.objects.get_all()
-        services = [item.get_shortname() for item in services]
 
         if '{}/{}'.format(host_name, service_description) in services:
             shortname = '{}/{}'.format(host_name, service_description)
@@ -182,6 +191,8 @@ def _create_centerregistry_services(host_name,
             config_service.set_attribute('check_command', check_command)
             config_service.set_attribute('contacts', site_contacts)
             config_service.set_attribute('host_name', host_name)
+            site_services.discard(shortname)
+
         else:
             action = 'Adding'
             config_service = Model.Service(
@@ -192,11 +203,21 @@ def _create_centerregistry_services(host_name,
                 servicegroups=host_name + '_centerregistry',
                 contacts=site_contacts,
                 filename=filename)
+            site_services.discard('{}/{}'.format(host_name,
+                                                 service_description))
         logging.debug('%s service: %s on host: %s',
                       action,
                       service_description,
                       host_name)
         config_service.save()
+
+    # delete old services for a site
+    for service in site_services:
+        logging.info('Removing obsolete service: %s from host: %s',
+                     service,
+                     host_name)
+        config_service = Model.Service.objects.get_by_shortname(service)
+        config_service.delete()
 
 
 def _merge_centerregistry_icinga_contacts():
@@ -318,7 +339,8 @@ def _create_config_from_centerregistry():
         use = 'custom-active-host'
         for iterator, centre in enumerate(REGISTRY['Centre']):
             host_name = \
-                str(_transliterate_to_ascii(centre['fields']['shorthand'].strip()))
+                str(_transliterate_to_ascii(
+                    centre['fields']['shorthand'].strip()))
             filename = \
                 '{}/configuration/configuration/{}.cfg'.format(getcwd(),
                                                                host_name)
