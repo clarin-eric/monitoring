@@ -239,16 +239,18 @@ def _merge_centerregistry_icinga_contacts():
             'email': contact['fields']['email_address']}
     contacts = creg_contacts
 
-    # which contacts are available in icinga?
+    # Which contacts are available in Icinga?
     icinga_contacts = dict()
     for contact in Model.Contact.objects.all:
-        # only modify registered contacts, unregistered contacts are templates.
+        # Only modify registered contacts, unregistered contacts are templates.
         if str(contact.get_attribute('register')) != '0':
-            icinga_contacts[contact.get_attribute('contact_name')] = \
-                {'name': contact.get_attribute('contact_name'),
-                 'email': contact.get_attribute('email')}
+            contact_name = contact.get_attribute('contact_name')
+            if contact_name is not None and contact_name.strip():
+                icinga_contacts[contact_name] = \
+                    {'name': contact_name,
+                     'email': contact.get_attribute('email')}
 
-    # store contacts available in icinga to corresponding Centre Registry ones
+    # Store contacts available in Icinga to corresponding Centre Registry ones
     contacts['dummy'] = icinga_contacts['dummy']
     for contact in list(contacts.keys()):
         if contacts[contact]['name'] in list(icinga_contacts.keys()):
