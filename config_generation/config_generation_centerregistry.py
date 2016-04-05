@@ -229,8 +229,9 @@ def _merge_centerregistry_icinga_contacts():
     # contacts from Centre Registry
     creg_contacts = dict()
     for contact in REGISTRY['Contact']:
-        if contact['fields']['edupersonprincipalname']:
-            name = contact['fields']['edupersonprincipalname']
+        eppn = contact['fields']['edupersonprincipalname']
+        if eppn is not None and eppn.strip():
+            name = eppn
         else:
             name = contact['fields']['email_address']
         creg_contacts[contact['pk']] = {
