@@ -116,7 +116,7 @@ def _push_and_delete_git_repo(repo,
         files = repo.untracked_files
         files.append('*')
         repo.index.add(files)
-        message = 'Information from CenterRegistry fetched and changed in ' \
+        message = 'Information from Centre Registry fetched and changed in ' \
                   'configuration: {}'.format(datetime.now())
         repo.index.commit(message)
         github = repo.remote('origin')
@@ -226,7 +226,7 @@ def _merge_centerregistry_icinga_contacts():
     have already stored contacts in Icinga. Merge them.
     :rtype : dict
     """
-    # contacts from Center Registry
+    # contacts from Centre Registry
     creg_contacts = dict()
     for contact in REGISTRY['Contact']:
         if contact['fields']['edupersonprincipalname']:
@@ -247,7 +247,7 @@ def _merge_centerregistry_icinga_contacts():
                 {'name': contact.get_attribute('contact_name'),
                  'email': contact.get_attribute('email')}
 
-    # store contacts available in icinga to corresponding centerregistry one
+    # store contacts available in icinga to corresponding Centre Registry ones
     contacts['dummy'] = icinga_contacts['dummy']
     for contact in list(contacts.keys()):
         if contacts[contact]['name'] in list(icinga_contacts.keys()):
