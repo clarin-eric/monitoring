@@ -4,20 +4,23 @@
 
 The main portal for information about CLARIN monitoring is https://trac.clarin.eu/wiki/SystemAdministration/Monitoring.
 
-[Travis CI]: https://travis-ci.org/clarin-eric/monitoring
-[Icinga]: https://clarin.fz-juelich.de/icinga
-[NagVis]: https://clarin.fz-juelich.de/nagvis/frontend/nagvis-js/index.php
-[Centre Registry]: https://centres.clarin.eu
-[Git repository]: https://github.com/clarin-eric/monitoring
-
 ## Workflow
 
-1. Every hour this [Git repository]’s master branch is pulled using cron scheduling, centre data is retrieved using the [Centre Registry] API by [`config_generation/config_generation_centerregistry.py`](config_generation/config_generation_centerregistry.py).
-* After pushing a new revision to the [Git repository]'s master branch, you have to check immediately whether the build succeeds on [Travis CI]. If your revision results in a failed [Travis CI] build, you have fix it straight away.
-1. If the [Travis CI] ‘build’ of the new revision is successful, the [Icinga] configuration in [Git repository] is processed and expanded based on that by [`config_generation/config_generation_centerregistry.py`](config_generation/config_generation_centerregistry.py). These expansions of the configuration per centre are stored in `configuration/{shorthand}.cfg`, where `{shorthand}` is the centre’s shorthand in the [Centre Registry]. The expanded configuration is pushed to the [Git repository]’s master branch.
-1. A small [web service](https://github.com/BeneDicere/simplistic-webhook-listener) is listening on the monitoring server: . If this web service receives an HTTP request from [Travis CI], and the payload says the build was successful, it executes a 'reload command' on the server. The output of the 'reload command' is [publicly available](https://clarin.fz-juelich.de:7011/logs/)
-1. The 'reload command' updates the production [Icinga] configuration on the monitoring server via `git pull` within `/etc/icinga/`. Finally it restarts [Icinga]. The new/expanded configuration will be used in production from then on.
+1. After pushing a new revision to the [Git repository]'s master branch, [Travis CI] attempts to build it.
+  * You have to check immediately whether that build succeeds. If your revision results in a failed build, you have fix it straight away.
+1. After completion of the Travis CI build of the new revision, Travis CI triggers a GitHub [web hook]. A small [web service] is listening on the [monitoring host]. If this web service is triggered via the `push` web hook, and the payload says the build was successful, the web service invokes a `reload`. 
+1. The `reload` operation updates the [Icinga] configuration on the monitoring server via `git pull` within `/etc/icinga/`. Finally it restarts the Icinga daemon. The revised configuration will be used from then on. The output of previous `reload` operations is [publicly available](https://clarin.fz-juelich.de:7011/logs/).
+  1. In more detail, the Python program [`config_generation_centerregistry.py`] performs the configuration processing. It pulls this [Git repository]’s `master` branch using [cron scheduling], and retrieves data about centre endpoints using the [Centre Registry] API. It modifies the Icinga configuration in this Git repo, in particular the configuration per centre as stored in `configuration/{shorthand}.cfg` files, where `{shorthand}` is the centre’s shorthand in the [Centre Registry]. It then pushes the changes to the Git repository to the `master` branch.
 
 ## Notes
 * New monitoring plugins/probes should be in the `probes` directory. In [Icinga] `.cfg` files you can refer to the directory with `$USER3$`.
-* [NagVis].
+
+[Travis CI]: https://travis-ci.org/clarin-eric/monitoring
+[Icinga]: https://clarin.fz-juelich.de/icinga
+[Centre Registry]: https://centres.clarin.eu
+[Git repository]: https://github.com/clarin-eric/monitoring
+[`config_generation_centerregistry.py`]: config_generation/config_generation_centerregistry.py
+[cron scheduling]: https://trac.clarin.eu/wiki/SystemAdministration/Hosts/fsd-cloud22.zam.kfa-juelich.de#Scheduledjobs
+[web service]: https://github.com/BeneDicere/simplistic-webhook-listener
+[web hook]: https://developer.github.com/webhooks/
+[monitoring host]: https://trac.clarin.eu/wiki/SystemAdministration/Hosts/fsd-cloud22.zam.kfa-juelich.de
