@@ -23,5 +23,9 @@ script:
 
 notifications:
   webhooks:
-   - https://clarin.fz-juelich.de:7011/travis/
-   - https://fsd-cloud22.fz-juelich.de:7011/travis/
+    urls:
+      - https://clarin.fz-juelich.de:7011/travis/
+      - https://fsd-cloud22.fz-juelich.de:7011/travis/
+    on_success: always
+    on_failure: never
+   
