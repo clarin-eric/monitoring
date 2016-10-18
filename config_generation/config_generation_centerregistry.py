@@ -235,8 +235,8 @@ def _merge_centerregistry_icinga_contacts():
         else:
             name = contact['fields']['email_address']
         creg_contacts[contact['pk']] = {
-            'name': name,
-            'email': contact['fields']['email_address']}
+            'name': name.strip(),
+            'email': (contact['fields']['email_address']).strip()}
     contacts = creg_contacts
 
     # Which contacts are available in Icinga?
@@ -244,7 +244,7 @@ def _merge_centerregistry_icinga_contacts():
     for contact in Model.Contact.objects.all:
         # Only modify registered contacts, unregistered contacts are templates.
         if str(contact.get_attribute('register')) != '0':
-            contact_name = contact.get_attribute('contact_name')
+            contact_name = (contact.get_attribute('contact_name')).strip()
             if contact_name is not None and contact_name.strip():
                 icinga_contacts[contact_name] = \
                     {'name': contact_name,
