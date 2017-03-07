@@ -35,7 +35,7 @@ _probe_curl_http_head() {
     # $2: Root directory path for curl.format and other data files.
     # $3: Optional acceptable failure-indicating HTTP response code.
     # $4: Optional extra command-line parameter(s) for curl.
-    _probe_curl_http_head_ "${1}" "${2}" "${3}" $4 --fail
+    _probe_curl_http_head_ "${1}" "${2}" "${3}" "${4} --fail"
 }
 
 _probe_curl_http_get() {
@@ -115,12 +115,14 @@ probe_oai_pmh_endpoint() {
     # $1: Full URL.
     # $2: Root directory path for curl.format and other data files.
     # $3: Optional extra command-line parameter(s) for curl.
-    _probe_curl_http_get "${1}?verb=Identify" "${2}" 'application/xml' $3 ;
+    _probe_curl_http_get "${1}?verb=Identify" "${2}" 'application/xml' "${3} --max-time 120" ;
     curl_exit_status="$?"
     if [ "$curl_exit_status" -eq '22' ]; then
         # Check for a probable 503 response that gives a Retry-After response header: we accept this as it is.
-        _probe_curl_http_head_ "${1}?verb=Identify" "${2}" '503' $3 |
+        _probe_curl_http_head_ "${1}?verb=Identify" "${2}" '503' "${3} --max-time 120" |
         grep -Eio 'Retry-After: [[:digit:]]+' 2>&1 ||
+        return 2 ;
+    elif [ "$curl_exit_status" -eq '28' ]; then
         return 2 ;
     else
         xmllint --noout --schema "$2/OAI-PMH.xsd" "${temp_data_file_path}" 2>&1 ||
