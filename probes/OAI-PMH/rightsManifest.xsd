@@ -18,7 +18,7 @@
   </annotation>
 
 
-  <include schemaLocation="http://www.openarchives.org/OAI/2.0/rights.xsd"/>
+  <include schemaLocation="../rights.xsd"/>
 
   <element name="rightsManifest" type="rights:rightsManifestType"/>
 
