@@ -115,7 +115,7 @@ probe_oai_pmh_endpoint() {
     # $1: Full URL.
     # $2: Root directory path for curl.format and other data files.
     # $3: Optional extra command-line parameter(s) for curl.
-    _probe_curl_http_get "${1}?verb=Identify" "${2}" 'application/xml' "${3} --max-time 120" ;
+    _probe_curl_http_get "${1}?verb=Identify" "${2}" 'application/xml,text/xml' "${3} --max-time 120" ;
     curl_exit_status="$?"
     if [ "$curl_exit_status" -eq '22' ]; then
         # Check for a probable 503 response that gives a Retry-After response header: we accept this as it is.
