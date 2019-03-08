@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <schema targetNamespace="http://www.openarchives.org/OAI/2.0/static-repository"
-        xmlns="http://www.w3.org/2001/XMLSchema"
+        xmlns="https://www.w3.org/2001/XMLSchema"
         xmlns:sr="http://www.openarchives.org/OAI/2.0/static-repository"
         xmlns:oai="http://www.openarchives.org/OAI/2.0/"
         elementFormDefault="qualified"
