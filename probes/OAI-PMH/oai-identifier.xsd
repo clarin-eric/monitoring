@@ -1,6 +1,6 @@
 <schema targetNamespace="http://www.openarchives.org/OAI/2.0/oai-identifier"
   xmlns:oai-identifier="http://www.openarchives.org/OAI/2.0/oai-identifier"
-  xmlns="https://www.w3.org/2001/XMLSchema"
+  xmlns="http://www.w3.org/2001/XMLSchema"
   elementFormDefault="qualified"
   attributeFormDefault="unqualified">
 
@@ -10,7 +10,7 @@
       For repositories that comply with the oai format for unique identifiers 
       for items records. 
       See: http://www.openarchives.org/OAI/2.0/guidelines-oai-identifier.htm
-      Validated with https://www.w3.org/2001/03/webdata/xsv on 2002-05-16 
+      Validated with http://www.w3.org/2001/03/webdata/xsv on 2002-05-16 
       Corrected to handle single letter elements in domain name, e.g ebibpol.p.lodz.pl 2007-05-22
       Simeon Warner $Date: 2007-06-07 19:28:11 $
     </documentation>
