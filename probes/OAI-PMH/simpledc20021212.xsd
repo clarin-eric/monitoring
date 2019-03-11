@@ -1,4 +1,4 @@
-<xs:schema xmlns:xs="https://www.w3.org/2001/XMLSchema"
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns="http://purl.org/dc/elements/1.1/"
            targetNamespace="http://purl.org/dc/elements/1.1/"
            elementFormDefault="qualified"
@@ -17,14 +17,14 @@
       attribute available.
 
       Supercedes version of 2002-03-12. 
-      Amended to remove namespace declaration for https://www.w3.org/XML/1998/namespace namespace,
+      Amended to remove namespace declaration for http://www.w3.org/XML/1998/namespace namespace,
       and to reference lang attribute via built-in xml: namespace prefix.
       xs:appinfo also removed.
     </xs:documentation>
   </xs:annotation>
 
-  <xs:import namespace="https://www.w3.org/XML/1998/namespace"
-             schemaLocation="https://www.w3.org/2001/03/xml.xsd">
+  <xs:import namespace="http://www.w3.org/XML/1998/namespace"
+             schemaLocation="http://www.w3.org/2001/03/xml.xsd">
   </xs:import>
 
   <xs:element name="title" type="elementType"/>
