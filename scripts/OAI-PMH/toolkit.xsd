@@ -1,0 +1,37 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+        xmlns:toolkit="http://oai.dlib.vt.edu/OAI/metadata/toolkit"
+        targetNamespace="http://oai.dlib.vt.edu/OAI/metadata/toolkit"
+        elementFormDefault="qualified"
+        attributeFormDefault="unqualified">
+
+   <annotation>
+      <documentation>
+         Schema for OAI toolkit information
+         Hussein Suleman {hussein@vt.edu}
+         Virginia Tech DLRL
+         7 October 2002 [revision] added toolkitIcon
+         28 March 2002 [first release]
+      </documentation>
+   </annotation>
+
+   <element name="toolkit" type="toolkit:toolkitType"/>
+
+   <complexType name="toolkitType">
+      <sequence>
+         <element name="title" minOccurs="0" maxOccurs="1" type="string"/>
+         <element name="author" minOccurs="0" maxOccurs="1" type="toolkit:authorType"/>
+         <element name="version" minOccurs="0" maxOccurs="1" type="string"/>
+         <element name="toolkitIcon" minOccurs="0" maxOccurs="1" type="anyURI"/>
+         <element name="URL" minOccurs="0" maxOccurs="1" type="anyURI"/>
+      </sequence>
+   </complexType>
+ 
+   <complexType name="authorType">
+      <sequence>
+         <element name="name" minOccurs="0" maxOccurs="1" type="string"/>
+         <element name="email" minOccurs="0" maxOccurs="1" type="string"/>
+         <element name="institution" minOccurs="0" maxOccurs="1" type="string"/>
+      </sequence>
+   </complexType>
+
+</schema>

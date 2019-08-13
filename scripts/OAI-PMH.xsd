@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+   <import namespace="http://www.openarchives.org/OAI/2.0/" schemaLocation="OAI-PMH/OAI-PMH.xsd"/>
+   <import namespace="http://purl.org/dc/dcmitype/" schemaLocation="OAI-PMH/dcmitype.xsd"/>
+   <import namespace="http://purl.org/dc/terms/" schemaLocation="OAI-PMH/dcterms.xsd"/>
+   <import namespace="http://www.loc.gov/MARC21/slim" schemaLocation="OAI-PMH/MARC21slim.xsd"/>
+   <import namespace="http://www.openarchives.org/OAI/2.0/rights/" schemaLocation="OAI-PMH/rightsManifest.xsd"/>
+   <import namespace="http://www.openarchives.org/OAI/2.0/oai-identifier" schemaLocation="OAI-PMH/oai-identifier.xsd"/>
+   <import namespace="http://www.openarchives.org/OAI/2.0/static-repository" schemaLocation="OAI-PMH/static-repository.xsd"/>
+   <import namespace="http://www.language-archives.org/OLAC/1.1/" schemaLocation="OAI-PMH/olac-extension.xsd"/>
+   <import namespace="http://purl.org/dc/elements/1.1/" schemaLocation="OAI-PMH/simpledc20021212.xsd"/>
+   <import namespace="http://www.language-archives.org/OLAC/1.1/" schemaLocation="OAI-PMH/olac.xsd"/>
+   <import namespace="http://www.openarchives.org/OAI/1.1/oai-identifier" schemaLocation="OAI-PMH/oai-identifier-1.1.xsd"/>
+   <import namespace="http://info.internet.isi.edu:80/in-notes/rfc/files/rfc1807.txt" schemaLocation="OAI-PMH/rfc1807.xsd"/>
+   <import namespace="http://www.openarchives.org/OAI/2.0/provenance" schemaLocation="OAI-PMH/provenance.xsd"/>
+   <import namespace="http://www.openarchives.org/OAI/2.0/rights/" schemaLocation="OAI-PMH/rights.xsd"/>
+   <import namespace="http://www.openarchives.org/OAI/2.0/friends/" schemaLocation="OAI-PMH/friends.xsd"/>
+   <import namespace="http://www.openarchives.org/OAI/1.1/oai_marc" schemaLocation="OAI-PMH/oai_marc.xsd"/>
+   <import namespace="http://purl.org/dc/elements/1.1/" schemaLocation="OAI-PMH/dc.xsd"/>
+   <import namespace="http://www.openarchives.org/OAI/1.1/eprints" schemaLocation="OAI-PMH/eprints.xsd"/>
+   <import namespace="http://www.openarchives.org/OAI/2.0/oai_dc/" schemaLocation="OAI-PMH/oai_dc.xsd"/>
+   <import namespace="http://www.language-archives.org/OLAC/1.1/olac-archive" schemaLocation="OAI-PMH/olac-archive.xsd"/>
+   <import namespace="http://oai.dlib.vt.edu/OAI/metadata/toolkit" schemaLocation="OAI-PMH/toolkit.xsd"/>
+</schema>

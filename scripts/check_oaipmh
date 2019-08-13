@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os
+import requests
+import sys
+
+from argparse import ArgumentParser
+from lxml import etree
+
+STATE_OK = (0, 'OK')
+STATE_WARNING = (1, 'WARNING')
+STATE_CRITICAL = (2, 'CRITICAL')
+STATE_UNKNOWN = (3, 'UNKNOWN')
+SCHEMA = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                      'OAI-PMH.xsd')
+
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('--endpoint', help='OAI-PMH endpoint.')
+    parser.add_argument('--schema', default=SCHEMA,
+                        help=f'Path to schema file, defaults to {SCHEMA}')
+    args = parser.parse_args()
+
+    try:
+        r = requests.get(f'{args.endpoint}?verb=Identify', timeout=120)
+        if  r.status_code == requests.codes.ok:
+            doc = etree.fromstring(r.content)
+            xmlschema = etree.XMLSchema(etree.parse(args.schema))
+            if not xmlschema.validate(doc):
+                print(f'OAI-PMH {STATE_WARNING[1]}: XSD validation failed')
+                print(xmlschema.error_log)
+                sys.exit(STATE_WARNING[0])
+            else:
+                print(f'OAI-PMH {STATE_OK[1]}: valid XML')
+                sys.exit(STATE_OK[0])
+        else:
+            print(f'OAI-PMH {STATE_CRITICAL[1]}: {r.status_code}')
+            sys.exit(STATE_CRITICAL[0])
+    except etree.XMLSyntaxError as e:
+        print(f'OAI-PMH {STATE_CRITICAL[1]}: XML syntax error {e}')
+        sys.exit(STATE_CRITICAL[0])
+    except requests.exceptions.Timeout as e:
+        print(f'OAI-PMH {STATE_WARNING[1]}: Timeout {e}')
+        sys.exit(STATE_WARNING[0])
+    except requests.exceptions.RequestException as e:
+        print(f'OAI-PMH {STATE_CRITICAL[1]}: {e}')
+        sys.exit(STATE_CRITICAL[0])

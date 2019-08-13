@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified"
+   targetNamespace="http://www.language-archives.org/OLAC/1.1/olac-archive"
+   xmlns="http://www.language-archives.org/OLAC/1.1/olac-archive"
+   xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+   <xs:annotation>
+      <xs:documentation> Schema for the OLAC Archive Description, Version 1.1, Steven Bird and Gary Simons
+         OLAC Archive Description semantics described in section 3 of:
+             http://www.language-archives.org/OLAC/repositories.html
+         2002-05-20: added length restrictions (varchar255) 
+         2002-12-10: added shortLocation, changed to version 1.0 
+         2003-09-23: shortLocation made obligatory (as per OLAC Repositories)
+         2008-04-19: changes for version 1.1, currentAsOf attribute, participant, and archivalSubmissionPolicy
+         2008-07-28: changed email attribute from mailto: to varchar(128)
+      </xs:documentation>
+   </xs:annotation>
+
+   <xs:element name="olac-archive" type="olac-archive"/>
+
+   <xs:complexType name="olac-archive">
+      <xs:complexContent>
+         <xs:restriction base="xs:anyType">
+            <xs:sequence>
+               <xs:element minOccurs="0" name="archiveURL" type="xs:anyURI"/>
+               <xs:element minOccurs="1" maxOccurs="unbounded" name="participant">
+                  <xs:complexType>
+                     <xs:attribute name="name" type="varchar255" use="required"/>
+                     <xs:attribute name="role" type="varchar255" use="required"/>
+                      <xs:attribute name="email" type="emailType" use="required"/>
+                  </xs:complexType>
+               </xs:element>
+               <xs:element name="institution" type="varchar255"/>
+               <xs:element minOccurs="0" name="institutionURL" type="xs:anyURI"/>
+               <xs:element name="shortLocation" type="varchar50"/>
+               <xs:element minOccurs="0" name="location" type="block"/>
+               <xs:element name="synopsis" type="block"/>
+               <xs:element name="access" type="block"/>
+               <xs:element minOccurs="0" name="archivalSubmissionPolicy" type="block"></xs:element>
+            </xs:sequence>
+            <xs:attribute name="type" use="required">
+               <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                     <xs:enumeration value="institutional"/>
+                     <xs:enumeration value="personal"/>
+                  </xs:restriction>
+               </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="currentAsOf" type="xs:date" use="required">
+            </xs:attribute>
+         </xs:restriction>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:simpleType name="block">
+      <xs:restriction base="xs:string">
+         <xs:maxLength value="1000"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType name="varchar255">
+      <xs:restriction base="xs:string">
+         <xs:maxLength value="255"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType name="varchar50">
+      <xs:restriction base="xs:string">
+         <xs:maxLength value="50"/>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType name="emailType">
+      <xs:restriction base="xs:string">
+         <xs:pattern value="\S+@(\S+\.)+\S+"/>
+      </xs:restriction>
+   </xs:simpleType>
+</xs:schema>
