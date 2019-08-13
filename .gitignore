@@ -17,3 +17,7 @@ config_generation/configuration
 
 # python
 *.pyc
+
+# Sublime Text
+clarin-eric_monitoring.sublime-project
+clarin-eric_monitoring.sublime-workspace
