@@ -669,7 +669,9 @@ def create_config_from_centerregistry():
                         _import='clarin-generic-host', check_command=None,
                         location=location, http_address=http_address,
                         http_uri=http_uri, http_ssl=http_ssl,
-                        groups=[host_group.name])
+                        groups=[host_group.name], ssl_certs=set())
+            if http_ssl:
+                host.ssl_certs.add(http_address)
 
             # OAI
             if oai_success:
@@ -682,6 +684,11 @@ def create_config_from_centerregistry():
                             'oaipmh_web_services_set': item['fields']['web_services_set'],
                             'oaipmh_web_services_type': item['fields']['web_services_type']
                         }
+
+                        if item['fields']['uri'].startswith('https://'):
+                            http_address, http_uri, http_ssl = parse_url(
+                                item['fields']['uri'].strip())
+                            host.ssl_certs.add(http_address)
                 if host.oaipmh_endpoints == {}:
                     del host.oaipmh_endpoints
                 # _create_centerregistry_services(host_name=host_name,
@@ -698,6 +705,11 @@ def create_config_from_centerregistry():
                         host.srucql_endpoints[item['pk']] = {
                             'srucql_endpoint': item['fields']['uri']
                         }
+
+                        if item['fields']['uri'].startswith('https://'):
+                            http_address, http_uri, http_ssl = parse_url(
+                                item['fields']['uri'].strip())
+                            host.ssl_certs.add(http_address)
                 if host.srucql_endpoints == {}:
                     del host.srucql_endpoints
                 # _create_centerregistry_services(host_name=host_name,
@@ -706,6 +718,15 @@ def create_config_from_centerregistry():
                 #                                 service_type='CQL',
                 #                                 filename=filename)
 
+            if len(host.ssl_certs) == 0:
+                del host.ssl_certs
+            else:
+                host.ssl_certs = {dns: {
+                        'ssl_cert_address': dns,
+                        'ssl_cert_warn': 30,
+                        'ssl_cert_critical': 10
+                    } for dns in host.ssl_certs
+                }
 
             host_group.save('./conf.d/hosts', host)
             host2 = Host.load(f'./conf.d/hosts/{name}.conf')
