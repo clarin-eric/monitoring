@@ -19,11 +19,12 @@ SERVICE_URL_MAPPER = {
 }
 
 
-class Config:
+class Config(dict):
     def __init__(self, name, **kwargs):
+        super(Config, self).__init__()
         self.__dict__['config_names'] = {'_import', 'name', 'vars'}
-        self.__dict__['_values'] = {'name': name, 'vars': {}}
-        self.name = name
+        self['name'] = name
+        self['vars'] = {}
         for k, v in kwargs.items():
             self[k] = v
 
@@ -37,97 +38,95 @@ class Config:
 
     def __delattr__(self, key):
         if key in self.config_names:
-            del self.__dict__['_values'][key]
+            del self[key]
         else:
-            del self.__dict__['_values']['vars'][key]
+            del self['vars'][key]
+
+    def __delitem__(self, key):
+        if key in self.config_names:
+            super(Config, self).__delitem__(key)
+        else:
+            del self['vars'][key]
 
     def __getattr__(self, key):
         if key == '__name__':
             return self.__class__.__name__
         else:
             if key in self.config_names:
-                return self.__dict__['_values'][key]
+                return self[key]
             else:
-                return self.__dict__['_values']['vars'][key]
-
-    def __setattr__(self, key, val):
-        if key in self.config_names:
-            self.__dict__['_values'][key] = val
-        else:
-            self.__dict__['_values']['vars'][key] = val
-
-    def __delitem__(self, key):
-        if key in self.config_names:
-            del self.__dict__['_values'][key]
-        else:
-            del self.__dict__['_values']['vars'][key]
+                return self['vars'][key]
 
     def __getitem__(self, key):
         if key in self.config_names:
-            return self._values[key]
+            return super(Config, self).__getitem__(key)
         else:
-            return self._values['vars'][key]
+            return self['vars'][key]
+
+    def __setattr__(self, key, val):
+        if key in self.config_names:
+            self[key] = val
+        else:
+            self['vars'][key] = val
 
     def __setitem__(self, key, val):
         if key in self.config_names:
-            self._values[key] = val
+            super(Config, self).__setitem__(key, val)
         else:
-            self._values['vars'][key] = val
+            self['vars'][key] = val
 
     def __str__(self):
-        def escape(v, k=None):
+        def escape(v):
             if type(v) == str:
-                return f'{k} = "{v}"' if k is not None else f'"{v}"'
+                return f'"{v}"'
             elif type(v) == int or type(v) == float:
-                return f'{k} = {v}' if k is not None else f'{v}'
+                return f'{v}'
             elif type(v) == bool:
-                v = 'true' if v else 'false'
-                return f'{k} = {v}' if k is not None else f'{v}'
-            elif type(v) == list or type(v) == tuple:
-                if k is not None:
-                    return f'{k} = [{", ".join(escape(i) for i in v)}]'
-                else:
-                    return f'[{", ".join(escape(i) for i in v)}]'
+                return f'{"true" if v else "false"}'
             else:
-                return f'{k} = "{v}"' if k is not None else f'{v}'
+                return f'"{v}"'
 
-        s = f'object {self.__name__} "{self.name}" {{\n'
-        if '_import' in self.keys():
-            s += f'    import "{self._import}"\n'
-
-        for k, v in self.flatten():
-            if k in ['name', '_import']:
-                continue
-
-            if type(v) == dict:
-                is_complex = [True if type(v2) == dict else False
-                              for k2, v2 in v.items()]
-
-                if True in is_complex:
-                    for k2, v2 in v.items():
-                        s += f'    {k}[{escape(k2)}] = {{\n'
-                        for k3, v3 in v2.items():
-                            s += f'        {escape(v3, k3)}\n'
-                        s += '    }\n'
+        def to_str(values):
+            lines = []
+            for k, v in values.items():
+                if k == '_import':
+                    lines.append(f'import "{self._import}"\n')
+                elif type(v) == list or type(v) == tuple:
+                    lines.append(f'{k} = [{", ".join(escape(i) for i in v)}]\n')
+                elif type(v) == dict:
+                    indent = True
+                    for i, line in enumerate(to_str(v)):
+                        if line.endswith(' = {\n'):
+                            if i == 0:
+                                lines.append(f'{k}["{line[:-5]}"] = {{\n')
+                            else:
+                                lines.append('}\n')
+                                lines.append(f'{k}["{line[:-5]}"] = {{\n')
+                            indent = False
+                        elif i == 0:
+                            lines.append(f'{k} = {{\n')
+                            lines.append(f'    {line}')
+                        elif line == '}\n':
+                            continue
+                        elif indent:
+                            lines.append(f'    {line}')
+                        else:
+                            lines.append(line)
+                    lines.append('}\n')
                 else:
-                    s += f'    {k} = {{\n'
-                    for k2, v2 in v.items():
-                        s += f'        {escape(v2, k2)}\n'
-                    s += '    }\n'
-            elif v is not None:
-                s += f'    {escape(v, k)}\n'
-        s += '}'
-        return s
+                    lines.append(f'{k} = {escape(v)}\n')
+            return lines
+
+
+        return f'object {self.__name__} "{self.name}" {{\n' + \
+            f'    {"    ".join(to_str(self))}' + \
+            '}'
 
     def items(self):
-        return self.__dict__['_values'].items()
-
-    def keys(self):
-        return self.__dict__['_values'].keys()
-
-    def flatten(self):
-        for k, v in self.items():
-            if k == 'vars':
+        for k, v in super(Config, self).items():
+            if k == 'name':
+                continue
+            elif k == 'vars':
                 for k2, v2 in v.items():
                     yield f'{k}.{k2}', v2
             else:
@@ -135,119 +134,93 @@ class Config:
 
     @classmethod
     def from_str(cls, s):
+        obj_pattern = r'object\s+(?P<obj>[^\s]+)\s+"(?P<name>[^"]+)"\s*{' + \
+            r'(?P<body>((?!object\s+[^\s]+\s+").)*)}'
+        prop_pattern = r'^\s*(import\s+"(?P<import>[^"]+)"|' + \
+            r'(vars\.)?(?P<list>[^\s=]+\s*=\s*\[([^\]]*)\]$)|' + \
+            r'(vars\.)?(?P<dict>[^\s=]+(\[[^\]]+\])?\s*=\s*\{([^\}]+)\}$)|' + \
+            r'(vars\.)?(?P<prop>[^\s=]+\s*=\s*(.+))$)'
+        kv_pattern = r'(?P<k>[^\s=]+)\s*=\s*(?P<v>.+)$'
+
         def unescape(v):
             if v == 'true':
                 return True
             elif v == 'false':
                 return False
-            elif re.fullmatch(r'[0-9]+', v):
+            elif re.fullmatch(r'[+-]?[0-9]+', v):
                 return int(v)
-            elif re.fullmatch(r'[0-9]+\.[0-9]+', v):
+            elif re.fullmatch(r'[+-]?[0-9]+\.[0-9]+', v):
                 return float(v)
             elif v.startswith('"') and v.endswith('"'):
                 return v[1:-1]
             else:
                 return v
 
-        dict_list_key_pattern = r'(vars\.)?([^\[\s]+)\[([^\]]+)\]'
-        import_pattern = r'\s*?import\s*?"([^"]+)"'
-        vars_pattern = r'\s*?(vars\.)?([^\s=]+)\s*?=\s*(.+)$'
-
-        name = None
-        check_command = None
-        values = {}
-        state = 0
-        pkey = None
-        for line in s.split('\n'):
-            if state == 0 and line.startswith(f'object {cls.__name__} '):
-                match = re.search(rf'object\s{cls.__name__}\s*?"(?P<name>[^"]+)"', line)
-                if match:
-                    name = match.group('name')
-                    state = 1
-            elif state == 1:
-                if re.match(import_pattern, line):
-                    values['_import'] = re.match(import_pattern, line).group(1)
-                elif re.match(vars_pattern, line):
-                    match = re.match(vars_pattern, line)
-                    k = match.group(2)
-                    v = match.group(3)
-
-                    if k == 'check_command':
-                        check_command = unescape(v)
-                    elif v.startswith('[') and v.endswith(']'):
-                        values[k] = []
-                        for s in v[1:-1].split(','):
-                            values[k].append(unescape(s.strip()))
-                    elif re.match(dict_list_key_pattern, k) and v == '{':
-                        m = re.match(dict_list_key_pattern, k)
-                        k1 = unescape(m.group(2))
-                        k2 = unescape(m.group(3))
-
-                        if k1 not in values:
-                            values[k1] = {k2: {}}
+        def extract(s):
+            values = {}
+            for m in re.finditer(prop_pattern, s, flags=re.M):
+                if m.group('import'):
+                    values['_import'] = m.group('import')
+                elif m.group('list'):
+                    m2 = re.search(r'(?P<k>[^\s=]+)\s*=\s*\[(?P<v>[^\]]*)\]',
+                                   m.group('list'))
+                    if m2:
+                        values[m2.group('k')] = []
+                        for s in m2.group('v').split(','):
+                            if s == '' or s == '""':
+                                continue
+                            values[m2.group('k')].append(unescape(s.strip()))
+                elif m.group('dict'):
+                    m2 = re.search(r'(?P<k>[^\s=\]]+)(\["(?P<k2>[^\]]+)"\])?\s*' +
+                                   r'=\s*\{(?P<v>[^\}]+)\}', m.group('dict'))
+                    if m2:
+                        k = m2.group('k')
+                        if m2.group('k2'):
+                            if k not in values:
+                                values[k] = {}
+                            values[k][m2.group('k2')] = \
+                                extract(m2.group('v').strip())
                         else:
-                            values[k1][k2] ={}
-                        pkey = (k1, k2)
-                        state = 3
-                    elif v == '{':
-                        values[k] = {}
-                        pkey = k
-                        state = 2
-                    else:
-                        values[k] = unescape(v)
-            elif state == 2:
-                if re.match(r'\s*?\}', line):
-                    state = 1
-                    pkey = None
-                else:
-                    match = re.match(vars_pattern, line)
-                    k = match.group(2)
-                    v = match.group(3)
+                            values[k] = extract(m2.group('v').strip())
+                elif m.group('prop'):
+                    m2 = re.search(kv_pattern, m.group('prop'))
+                    if m2:
+                        values[m2.group('k')] = unescape(m2.group('v').strip())
+            return values
 
-                    if v.startswith('[') and v.endswith(']'):
-                        values[pkey][k] = []
-                        for s in v[1:-1].split(','):
-                            values[pkey][k].append(unescape(s.strip()))
-                    else:
-                        values[pkey][k] = unescape(v)
-            elif state == 3:
-                if re.match(r'\s*?\}', line):
-                    state = 1
-                    pkey = None
-                else:
-                    match = re.match(vars_pattern, line)
-                    k = match.group(2)
-                    v = match.group(3)
+        match = re.search(obj_pattern, s, flags=re.M | re.S)
+        if match:
+            name = match.group('name')
+            values = extract(match.group('body'))
 
-                    if v.startswith('[') and v.endswith(']'):
-                        values[pkey[0]][pkey[1]][k] = []
-                        for s in v[1:-1].split(','):
-                            values[pkey[0]][pkey[1]][k].append(unescape(s.strip()))
-                    else:
-                        values[pkey[0]][pkey[1]][k] = unescape(v)
-        return cls(name, check_command, **values)
+            if cls.__name__ == 'Config':
+                return eval(match.group('obj'))(name, **values)
+            else:
+                return cls(name, **values)
+        else:
+            return None
 
     @classmethod
     def load(cls, path):
-        cfg = ''
+        obj_regex = r'object\s+(?P<obj>[^\s]+)\s+"(?P<name>[^"]+)"\s*{' + \
+            r'(?P<body>((?!object\s+[^\s]+\s+").)*)}'
+
+        objs = []
         with open(path, 'r', encoding='utf8') as f:
-            brackets = 0
-            for line in f.readlines():
-                if line.startswith(f'object {cls.__name__} '):
-                    cfg = line
-                    brackets = 1
-                elif cfg.startswith(f'object {cls.__name__} '):
-                    cfg += line
-                    brackets += line.count('{')
-                    brackets -= line.count('}')
+            for m in re.finditer(obj_regex, f.read(), flags=re.M | re.S):
+                if cls.__name__ != 'Config' and cls.__name__ != m.group('obj'):
+                    continue
+                objs.append(cls.from_str(m.group().strip()))
+        if len(objs) == 0:
+            return None
+        elif len(objs) == 1:
+            return objs[0]
+        else:
+            return objs
 
-                if brackets == 0 and cfg != '' and '{' in cfg and '}' in cfg:
-                    break
-
-        return cls.from_str(cfg.strip())
-
-    def save(self, base_path, *args):
-        path = os.path.join(base_path, f'{self.name}.conf')
+    def save(self, path, *args):
+        if os.path.isdir(path):
+            path = os.path.join(path, f'{self.name}.conf')
         with open(path, 'w', encoding='utf8') as f:
             f.write(f'{self}\n')
 
@@ -256,7 +229,7 @@ class Config:
 
 
 class Host(Config):
-    def __init__(self, name, check_command, **kwargs):
+    def __init__(self, name, **kwargs):
         super(Host, self).__init__(name)
         self.config_names.update(['display_name', 'address', 'address6',
                                  'groups', 'vars', 'check_command',
@@ -271,7 +244,6 @@ class Host(Config):
                                  'flapping_threshold_low', 'volatile', 'zone',
                                  'command_endpoint', 'notes', 'notes_url',
                                  'action_url', 'icon_image', 'icon_image_alt'])
-        self.check_command = check_command
         for k, v in kwargs.items():
             self[k] = v
 
@@ -301,15 +273,6 @@ class UserGroup(Config):
         for k, v in kwargs.items():
             self[k] = v
 
-#         object Host "icinga2-client1.localdomain" {
-#   display_name = "Linux Client 1"
-#   address = "192.168.56.111"
-#   address6 = "2a00:1450:4001:815::2003"
-
-#   groups = [ "linux-servers" ]display_name
-
-#   check_command = "hostalive"
-# }
 
 def _fetch_centre_registry(key):
     """
@@ -508,14 +471,9 @@ def _create_centerregistry_services(host_name,
         config_service.delete()
 
 
-def merge_centerregistry_icinga_users():
-    """
-    We have contacts with e-mail address/ePPN from Centre Registry and we
-    have already stored contacts in Icinga. Merge them.
-    :rtype : dict
-    """
+def merge_centerregistry_icinga_users(users):
     # contacts from Centre Registry
-    users = {}
+    ids = {}
     for contact in REGISTRY['Contact']:
         name = contact['fields']['name']
         eppn = contact['fields']['edupersonprincipalname']
@@ -535,150 +493,61 @@ def merge_centerregistry_icinga_users():
         if website_url == '':
             website_url = None
 
-        users[contact['pk']] = User(name=contact['pk'], display_name=name,
-                                    email=email, period='24x7',
-                                    telephone_number=telephone_number,
-                                    website_url=website_url, groups=[])
-        # print(users[contact['pk']])
-
-
-
-    # Which contacts are available in Icinga?
-    icinga_contacts = {}
-    # for contact in Model.Contact.objects.all:
-    #     # Only modify registered contacts, unregistered contacts are templates.
-    #     if str(contact.get_attribute('register')) != '0':
-    #         contact_name = (contact.get_attribute('contact_name')).strip()
-    #         if contact_name is not None and contact_name.strip():
-    #             icinga_contacts[contact_name] = \
-    #                 {'name': contact_name,
-    #                  'email': contact.get_attribute('email')}
-
-    # Store contacts available in Icinga to corresponding Centre Registry ones
-    # # contacts['dummy'] = icinga_contacts['dummy']
-    # for contact in list(users.keys()):
-    #     if users[contact]['name'] in list(icinga_contacts.keys()):
-    #         users[contact]['name_icinga'] = \
-    #             icinga_contacts[users[contact]['name']]['name']
-    #     else:
-    #         users[contact]['name_icinga'] = False
-    logging.debug("Contacts from creg, with local representation: %s",
-                  users)
-    return users
-
-
-def _extract_contact(contact_id, icinga_contacts):
-    contact_name = icinga_contacts[contact_id]['name_icinga']
-
-    if contact_name:
-        # Contact is already in Icinga.
-        config_contact = \
-            Model.Contact.objects.get_by_shortname(contact_name)
-        config_contact.set_attribute('email',
-                                     icinga_contacts[contact_id]['email'])
-    else:
-        # Contact not in Icinga: add him/her.
-        contact_name = icinga_contacts[contact_id]['name']
-        icinga_contacts[contact_id]['name_icinga'] = contact_name
-    #     config_contact = \
-    #         Model.Contact(contact_name=contact_name,
-    #                       use='generic-contact',
-    #                       email=icinga_contacts[contact_id]['email'],
-    #                       filename='{cwd:s}/configuration/configuration/pynag/'
-    #                                'contacts.cfg'.format(cwd=getcwd()))
-    # config_contact.save()
-    return contact_name
-
-
-def get_site_usergroup(centre, users):
-    """
-    Extract all contacts from the Centre Registry that should be notified about
-    a given centre's services. If we do not have them in Icinga already, add em
-
-    :param centre: dict
-    :param icinga_contacts: dict (already in Icinga)
-    :return: string (containing concatenated contacts)
-    """
-    name = transliterate_to_ascii(centre['fields']['shorthand'].strip())
-    display_name = transliterate_to_ascii(centre['fields']['name'].strip())
-    group = UserGroup(name=f'{name}_group',
-                      display_name=f'{display_name} User Group')
-
-    for contact_id in centre['fields']['monitoring_contacts']:
-        users[contact_id].groups.append(group.name)
-        # print(users[contact_id])
-        # contacts.append(_extract_contact(contact_id=contact_id,
-        #                                  icinga_contacts=icinga_contacts))
-
-    tech_contact_id = centre['fields']['technical_contact']
-    users[tech_contact_id].groups.append(group.name)
-    # print(users[tech_contact_id])
-    # contacts.append(_extract_contact(contact_id=tech_contact_id,
-    #                                  icinga_contacts=icinga_contacts))
-    # print(group)
-    return group
-
-
-def _move_objekt_to_siteconfig(nagios_object, filename):
-    """
-    :param nagios_object:
-    :param filename:
-    :return:
-    """
-    if nagios_object.get_filename() != filename:
-        tmp = nagios_object.move(filename)
-        # this if else is due to a bug in pynag move command
-        if type(tmp) is list:
-            return tmp[0]
+        ids[contact['pk']] = email
+        if email in users:
+            users[email].display_name = name
+            users[email].telephone_number = telephone_number
+            users[email].website_url = website_url
         else:
-            return tmp
-    else:
-        return nagios_object
+            users[email] = User(name=email, display_name=name,
+                                _import='generic-user', email=email,
+                                telephone_number=telephone_number,
+                                website_url=website_url, groups=[])
+    return ids
 
 
 def create_config_from_centerregistry():
-    """
-
-    :return:
-    """
-    # _load_icinga_config('configuration/icinga.cfg')
+    users = {user.email: user for user in User.load('./conf.d/users.conf')}
     user_groups = []
     if _fetch_centre_registry('Centre') and _fetch_centre_registry('Contact'):
         oai_success = _fetch_centre_registry('OAIPMHEndpoint')
         cql_success = _fetch_centre_registry('FCSEndpoint')
-        users = merge_centerregistry_icinga_users()
+        ids = merge_centerregistry_icinga_users(users)
 
         for i, centre in enumerate(REGISTRY['Centre']):
-            print(centre)
-
-            user_groups.append(get_site_usergroup(centre, users))
-
             name = transliterate_to_ascii(centre['fields']['shorthand'].strip())
             display_name = centre['fields']['name'].strip()
 
+            host = Host(name=name, display_name=display_name,
+                        _import='clarin-generic-host')
             host_group = HostGroup(name=name, display_name=display_name)
+            host.groups = [host_group.name]
 
-            http_address, http_uri, http_ssl = parse_url(
+            user_group = UserGroup(name=name, display_name=display_name)
+            for contact_id in centre['fields']['monitoring_contacts']:
+                users[ids[contact_id]].groups.append(user_group.name)
+            tech_contact_id = centre['fields']['technical_contact']
+            users[ids[tech_contact_id]].groups.append(user_group.name)
+            user_groups.append(user_group)
+
+            host.address, host.http_uri, host.http_ssl = parse_url(
                 centre['fields']['website_url'].strip())
 
-            location = {
+            host.location = {
                 'latitude': float(centre['fields']['latitude'].strip()),
                 'longitude': float(centre['fields']['longitude'].strip())
             }
-            host = Host(name=name, display_name=display_name,
-                        _import='clarin-generic-host', check_command=None,
-                        location=location, http_address=http_address,
-                        http_uri=http_uri, http_ssl=http_ssl,
-                        groups=[host_group.name], ssl_certs=set())
-            if http_ssl:
-                host.ssl_certs.add(http_address)
+
+            host.ssl_certs = set()
+            if host.http_ssl:
+                host.ssl_certs.add(host.address)
 
             # OAI
             if oai_success:
                 host.oaipmh_endpoints = {}
                 for item in REGISTRY['OAIPMHEndpoint']:
                     if item['fields']['centre'] == centre['pk']:
-                        host.oaipmh_endpoints[item['pk']] = {
+                        host.oaipmh_endpoints[f'{item["pk"]}'] = {
                             'oaipmh_endpoint': item['fields']['uri'],
                             'oaipmh_metadata_format': item['fields']['metadata_format'],
                             'oaipmh_web_services_set': item['fields']['web_services_set'],
@@ -691,18 +560,13 @@ def create_config_from_centerregistry():
                             host.ssl_certs.add(http_address)
                 if host.oaipmh_endpoints == {}:
                     del host.oaipmh_endpoints
-                # _create_centerregistry_services(host_name=host_name,
-                #                                 site_contacts=site_contacts,
-                #                                 centre_definition=centre,
-                #                                 service_type='OAI',
-                #                                 filename=filename)
 
             # CQL
             if cql_success:
                 host.srucql_endpoints = {}
                 for item in REGISTRY['FCSEndpoint']:
                     if item['fields']['centre'] == centre['pk']:
-                        host.srucql_endpoints[item['pk']] = {
+                        host.srucql_endpoints[f'{item["pk"]}'] = {
                             'srucql_endpoint': item['fields']['uri']
                         }
 
@@ -712,11 +576,6 @@ def create_config_from_centerregistry():
                             host.ssl_certs.add(http_address)
                 if host.srucql_endpoints == {}:
                     del host.srucql_endpoints
-                # _create_centerregistry_services(host_name=host_name,
-                #                                 site_contacts=site_contacts,
-                #                                 centre_definition=centre,
-                #                                 service_type='CQL',
-                #                                 filename=filename)
 
             if len(host.ssl_certs) == 0:
                 del host.ssl_certs
@@ -731,6 +590,16 @@ def create_config_from_centerregistry():
             host_group.save('./conf.d/hosts', host)
             host2 = Host.load(f'./conf.d/hosts/{name}.conf')
             print(host.name, host == host2)
+            if host != host2:
+                print(host)
+                print(host2)
+                print('-' * 100)
+
+        users = [v for v in users.values()]
+        for user in users:
+            user.groups = list(set(user.groups))
+        users[0].save('./conf.d/users.conf', *(users[1:] + user_groups))
+
 
         # contacts = merge_centerregistry_icinga_users()
 
