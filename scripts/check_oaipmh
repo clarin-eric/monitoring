@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import os
-import requests
+import signal
 import sys
+import time
 
 from argparse import ArgumentParser
-from lxml import etree
+from functools import partial
+
 
 STATE_OK = (0, 'OK')
 STATE_WARNING = (1, 'WARNING')
@@ -15,27 +17,67 @@ STATE_UNKNOWN = (3, 'UNKNOWN')
 SCHEMA = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                       'OAI-PMH.xsd')
 
+__version__ = '0.1.0'
+
+
+try:
+    import requests
+except ImportError:
+    print(f'{STATE_UNKNOWN[1]} - Failed to import requests.')
+    sys.exit(STATE_UNKNOWN[0])
+
+try:
+    from lxml import etree
+except ImportError:
+    print(f'{STATE_UNKNOWN[1]} - Failed to import lxml.')
+    sys.exit(STATE_UNKNOWN[0])
+
+
+def handle_sigalrm(signum, frame, timeout=None):
+    print(f'{STATE_UNKNOWN[1]} - Plugin timed out after {timeout:d} seconds.')
+    sys.exit(STATE_UNKNOWN[0])
+
+
 if __name__ == '__main__':
-    parser = ArgumentParser()
+    parser = ArgumentParser(prog='chech_oaipmh')
+    parser.add_argument('-V', '--version', action='version',
+                        version=f'%(prog)s v{__version__}')
+    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('-t', '--timeout', default=10, type=int,
+                        help='Timeout in seconds (default 10s).')
     parser.add_argument('--endpoint', help='OAI-PMH endpoint.')
     parser.add_argument('--schema', default=SCHEMA,
                         help=f'Path to schema file, defaults to {SCHEMA}')
     args = parser.parse_args()
 
+    signal.signal(signal.SIGALRM, partial(handle_sigalrm, timeout=args.timeout))
+    signal.alarm(args.timeout)
+
+    current_time_millis = lambda: int(round(time.time() * 1000))
+
     try:
-        r = requests.get(f'{args.endpoint}?verb=Identify', timeout=120)
+        if args.verbose:
+            print(f'Get XML from {args.endpoint}?verb=Identify.')
+        start_time = current_time_millis()
+        r = requests.get(f'{args.endpoint}?verb=Identify')
+        runtime = current_time_millis() - start_time
+        if args.verbose:
+            print(f'Response code: {r.status_code}')
         if  r.status_code == requests.codes.ok:
             doc = etree.fromstring(r.content)
             xmlschema = etree.XMLSchema(etree.parse(args.schema))
             if not xmlschema.validate(doc):
-                print(f'OAI-PMH {STATE_WARNING[1]}: XSD validation failed')
+                print(f'OAI-PMH {STATE_WARNING[1]}: XSD validation failed|' +
+                      f"'size'={len(r.content)}B 'time'={runtime}ms")
                 print(xmlschema.error_log)
                 sys.exit(STATE_WARNING[0])
             else:
-                print(f'OAI-PMH {STATE_OK[1]}: valid XML')
+                print(f'OAI-PMH {STATE_OK[1]}: valid XML|' +
+                      f"'size'={len(r.content)}B 'time'={runtime}ms")
                 sys.exit(STATE_OK[0])
         else:
-            print(f'OAI-PMH {STATE_CRITICAL[1]}: {r.status_code}')
+            print(f'OAI-PMH {STATE_CRITICAL[1]}: {r.status_code}|' +
+                  f"'time'={runtime}ms")
             sys.exit(STATE_CRITICAL[0])
     except etree.XMLSyntaxError as e:
         print(f'OAI-PMH {STATE_CRITICAL[1]}: XML syntax error {e}')
@@ -46,3 +88,6 @@ if __name__ == '__main__':
     except requests.exceptions.RequestException as e:
         print(f'OAI-PMH {STATE_CRITICAL[1]}: {e}')
         sys.exit(STATE_CRITICAL[0])
+    except Exception as e:
+        print(f'{STATE_UNKNOWN[1]}\n{e}')
+        sys.exit(STATE_UNKNOWN[0])
