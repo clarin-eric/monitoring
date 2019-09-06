@@ -533,10 +533,9 @@ def create_config_from_centerregistry():
             host.address, host.http_uri, host.http_ssl = parse_url(
                 centre['fields']['website_url'].strip())
 
-            host.location = {
-                'latitude': float(centre['fields']['latitude'].strip()),
-                'longitude': float(centre['fields']['longitude'].strip())
-            }
+            host.geolocation = '' + \
+                f'{float(centre["fields"]["latitude"].strip())},' + \
+                f'{float(centre["fields"]["longitude"].strip())}'
 
             host.ssl_certs = set()
             if host.http_ssl:
