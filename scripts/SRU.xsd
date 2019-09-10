@@ -6,7 +6,7 @@
     <import namespace="http://docs.oasis-open.org/ns/search-ws/facetedResults" schemaLocation="SRU/facetedResults.xsd"/>
     <import namespace="http://docs.oasis-open.org/ns/search-ws/diagnostic" schemaLocation="SRU/diagnostic.xsd"/>
     <import namespace="http://explain.z3950.org/dtd/2.0/" schemaLocation="SRU/explain.xsd"/>
-
     <import namespace="http://docs.oasis-open.org/ns/search-ws/sruRequest" schemaLocation="SRU/sruRequest.xsd"/>
     <import namespace="http://docs.oasis-open.org/ns/search-ws/SearchResultAnalysis" schemaLocation="SRU/searchResultAnalysis.xsd"/>
+    <import namespace="http://www.loc.gov/zing/srw/srw-types" schemaLocation="SRU/srw-types.xsd"/>
 </schema>

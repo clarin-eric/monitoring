@@ -7,12 +7,12 @@
     Copyright (c) OASIS Open 2013.  All Rights Reserved.
 -->
 
-<!--  
-Editor: Ray Denenberg, Library of Congress.  rden@loc.gov 
-***** 
+<!--
+Editor: Ray Denenberg, Library of Congress.  rden@loc.gov
+*****
 -->
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" 
-  xmlns="http://docs.oasis-open.org/ns/search-ws/searchResultAnalysis" 
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns="http://docs.oasis-open.org/ns/search-ws/searchResultAnalysis"
   targetNamespace="http://docs.oasis-open.org/ns/search-ws/searchResultAnalysis"
   elementFormDefault="qualified"
  attributeFormDefault="unqualified">

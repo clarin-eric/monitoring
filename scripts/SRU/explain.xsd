@@ -7,22 +7,22 @@
     Copyright (c) OASIS Open 2013.  All Rights Reserved.
 -->
 
-<!--  
+<!--
 Editor: Janifer Gatenby (OCLC)
-***** 
+*****
 -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://explain.z3950.org/dtd/2.0/" targetNamespace="http://explain.z3950.org/dtd/2.0/" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<!--
 ******************************************************************************
 ******************************************************************************
 
-                Definition of root element <explain>  
+                Definition of root element <explain>
 
 ******************************************************************************
 ******************************************************************************
 -->
 	<xs:element name="explain">
-		<!-- 
+		<!--
 The explain record consists of the following elements, in order
  <serverInfo>   (mandatory)
  <databaseInfo>, <metaInfo>, <IndexInfo>  (all optional, non repeatable)
@@ -44,7 +44,7 @@ plus attributes: "authoritative" and "id" (both optional)
 					</xs:annotation>
 				</xs:element>
 				<xs:element ref="indexInfo" minOccurs="0"/>
-				<xs:element name="searchInfo">
+				<xs:element name="searchInfo" minOccurs="0">
 					<xs:annotation>
 						<xs:documentation>information on building a search, including sample queries, information on query types supported, how to requests facet counts and sorting </xs:documentation>
 					</xs:annotation>
@@ -221,6 +221,7 @@ plus attributes: "authoritative" and "id" (both optional)
 						</xs:annotation>
 					</xs:element>
 				</xs:choice>
+				<xs:element ref="indexInfo" minOccurs="0"/>
 				<xs:element name="stylesheet" minOccurs="0">
 					<xs:annotation>
 						<xs:documentation>information on the support of stylesheets by a server</xs:documentation>
@@ -395,6 +396,8 @@ serverInfo,  databaseInfo, metaInfo, IndexInfo, recordInfo, schemaInfo, configIn
 					<xs:documentation>URL to a WSDL file which describes the server</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
+			<!-- ### The next line is not in the official schema.  I need 2.1 -->
+   			<xs:attribute name="method" type="xs:string" use="optional" default="get"/>
 		</xs:complexType>
 	</xs:element>
 	<!--
@@ -590,10 +593,10 @@ serverInfo,  databaseInfo, metaInfo, IndexInfo, recordInfo, schemaInfo, configIn
 			</xs:choice>
 		</xs:complexType>
 	</xs:element>
-	<!-- 
+	<!--
 ******************************************************************************
 ******************************************************************************
-             
+
 Subordinate definitions. Alphabetically.
 
 ******************************************************************************
@@ -818,8 +821,8 @@ Subordinate definitions. Alphabetically.
 	<!--
 ******************************************************************************
 ******************************************************************************
-             
-              Auxiliary definitions 
+
+              Auxiliary definitions
 
 ******************************************************************************
 ******************************************************************************
@@ -896,7 +899,7 @@ stringPlusCodesPlusPrimaryPlusLang
 			<xs:enumeration value="false"/>
 		</xs:restriction>
 	</xs:simpleType>
-	<!-- 
+	<!--
 ******************************************************************************
 ******************************************************************************
 
