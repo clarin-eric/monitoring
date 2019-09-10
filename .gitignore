@@ -4,7 +4,6 @@
 
 # icinga
 ./constants.conf
-./icinga2.conf
 ./conf.d/api-users.conf
 ./features-available
 ./features-enabled
