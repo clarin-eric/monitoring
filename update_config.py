@@ -356,15 +356,14 @@ def commit_changes(repo, push_repo=False):
         repo.index.add([i.a_path for i in repo.index.diff(None)])
 
         now = datetime.now()
-        logging.info(f'Changes, commited at: {now}.')
-        repo.index.commit('Information from Centre Registry fetched and ' +
-                          f'changed: {now}.')
+        logging.info(f'Found changes, commit changes.')
+        repo.index.commit('Information from Centre Registry updated.')
 
         if push_repo:
-            logging.info(f'Push to origin at.')
+            logging.info(f'Push to origin.')
             repo.remote('origin').push()
     else:
-        logging.info(f'No changes, no commit at: {datetime.now()}.')
+        logging.info(f'No changes, nothing to commit.')
 
 
 def merge_centerregistry_users(users):
