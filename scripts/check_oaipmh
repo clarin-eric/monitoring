@@ -64,8 +64,14 @@ if __name__ == '__main__':
         if args.verbose:
             print(f'Response code: {r.status_code}')
         if  r.status_code == requests.codes.ok:
+            if args.verbose:
+                print('Convert response to XML doc.')
             doc = etree.fromstring(r.content)
+
+            if args.verbose:
+                print(f'Load XML schema {args.schema}.')
             xmlschema = etree.XMLSchema(etree.parse(args.schema))
+
             if not xmlschema.validate(doc):
                 print(f'OAI-PMH {STATE_WARNING[1]}: XSD validation failed|' +
                       f"'size'={len(r.content)}B 'time'={runtime}ms")
