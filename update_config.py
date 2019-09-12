@@ -91,7 +91,7 @@ class Config(dict):
                     lines.append(f'import "{self._import}"\n')
                 elif type(v) == list or type(v) == tuple:
                     lines.append(
-                        f'{k} = [{", ".join(escape(i) for i in v)}]\n')
+                        f'{k} = [{", ".join(escape(i) for i in sorted(v))}]\n')
                 elif type(v) == dict:
                     indent = True
                     for i, line in enumerate(to_str(v)):
