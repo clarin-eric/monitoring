@@ -416,7 +416,8 @@ def merge_centerregistry_users(users):
 def create_config_from_centerregistry():
     logging.info('Load exinting users config from conf.d.')
     users = {user.email: user for user in User.load('./conf.d/users.conf')}
-    user_groups = []
+    user_groups = {group.name: group
+                   for group in User.load('./conf.d/users.conf')}
     if fetch_centre_registry('Centre') and fetch_centre_registry('Contact'):
         oai_success = fetch_centre_registry('OAIPMHEndpoint')
         cql_success = fetch_centre_registry('FCSEndpoint')
@@ -434,12 +435,15 @@ def create_config_from_centerregistry():
             host_group = HostGroup(name=name, display_name=display_name)
             host.groups = [host_group.name]
 
-            user_group = UserGroup(name=name, display_name=display_name)
+            if name not in user_groups:
+                user_groups[name] = UserGroup(name=name,
+                                              display_name=display_name)
+            else:
+                user_groups[name].display_name = display_name
             for contact_id in centre['fields']['monitoring_contacts']:
-                users[ids[contact_id]].groups.append(user_group.name)
+                users[ids[contact_id]].groups.append(name)
             tech_contact_id = centre['fields']['technical_contact']
-            users[ids[tech_contact_id]].groups.append(user_group.name)
-            user_groups.append(user_group)
+            users[ids[tech_contact_id]].groups.append(name)
 
             host.address, host.http_uri, host.http_ssl = parse_url(
                 centre['fields']['website_url'].strip())
@@ -514,7 +518,8 @@ def create_config_from_centerregistry():
         users = [v for v in users.values()]
         for user in users:
             user.groups = list(set(user.groups))
-        users[0].save('./conf.d/users.conf', *(users[1:] + user_groups))
+        users[0].save('./conf.d/users.conf',
+                      *(users[1:] + [v for v in user_groups.values()]))
 
 
 if __name__ == '__main__':
