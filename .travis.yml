@@ -12,11 +12,8 @@ install:
   - pip install -r requirements.txt
 
 script:
- - docker run -v `pwd`:/etc/icinga benedicere/icinga-configtest
  - find . -name "*.py" -exec pep8 {} \;
  - nosetests --with-coverage --cover-package=config_generation,.
- - radon mi update_config .
- - radon cc update_config .
 
 notifications:
   webhooks:
