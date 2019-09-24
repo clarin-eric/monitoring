@@ -417,7 +417,7 @@ def create_config_from_centerregistry():
     logging.info('Load exinting users config from conf.d.')
     users = {user.email: user for user in User.load('./conf.d/users.conf')}
     user_groups = {group.name: group
-                   for group in User.load('./conf.d/users.conf')}
+                   for group in UserGroup.load('./conf.d/users.conf')}
     if fetch_centre_registry('Centre') and fetch_centre_registry('Contact'):
         oai_success = fetch_centre_registry('OAIPMHEndpoint')
         cql_success = fetch_centre_registry('FCSEndpoint')
