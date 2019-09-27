@@ -12,7 +12,7 @@ install:
 
 script:
  - find . -name "*.py" -exec pep8 {} \;
- - config_generation
+ - python3 config_generation.py
 
 notifications:
   webhooks:
