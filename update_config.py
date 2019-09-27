@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import os
 import re
@@ -11,6 +12,7 @@ from datetime import datetime
 from git import Repo
 from git.exc import GitCommandError
 from subprocess import Popen, PIPE
+from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
 
 
@@ -33,6 +35,12 @@ class Config(dict):
             if self[k] != other[k]:
                 return False
         return True
+
+    def __contains__(self, item):
+        if item in self.config_names:
+            return super(Config, self).__contains__(item)
+        else:
+            return item in self['vars']
 
     def __delattr__(self, key):
         if key in self.config_names:
@@ -245,6 +253,25 @@ class Host(Config):
         for k, v in kwargs.items():
             self[k] = v
 
+    def add_ssl_cert(self, dns):
+        if 'ssl_certs' not in self:
+            self.ssl_certs = set()
+        self.ssl_certs.add(dns)
+
+    def items(self):
+        for k, v in super(Host, self).items():
+            if k == 'vars.ssl_certs':
+                if len(v) == 0:
+                    continue
+                else:
+                    yield k, {dns: {
+                        'ssl_cert_address': dns,
+                        'ssl_cert_warn': 30,
+                        'ssl_cert_critical': 10
+                    } for dns in v}
+            else:
+                yield k, v
+
 
 class HostGroup(Config):
     def __init__(self, name, **kwargs):
@@ -447,14 +474,12 @@ def create_config_from_centerregistry():
 
             host.address, host.http_uri, host.http_ssl = parse_url(
                 centre['fields']['website_url'].strip())
+            if host.http_ssl:
+                host.add_ssl_cert(host.address)
 
             host.geolocation = '' + \
                 f'{float(centre["fields"]["latitude"].strip())},' + \
                 f'{float(centre["fields"]["longitude"].strip())}'
-
-            host.ssl_certs = set()
-            if host.http_ssl:
-                host.ssl_certs.add(host.address)
 
             # OAI
             if oai_success:
@@ -477,7 +502,7 @@ def create_config_from_centerregistry():
                         if fields['uri'].startswith('https://'):
                             http_address, http_uri, http_ssl = parse_url(
                                 fields['uri'].strip())
-                            host.ssl_certs.add(http_address)
+                            host.add_ssl_cert(http_address)
                 if host.oaipmh_endpoints == {}:
                     del host.oaipmh_endpoints
 
@@ -496,19 +521,9 @@ def create_config_from_centerregistry():
                         if fields['uri'].startswith('https://'):
                             http_address, http_uri, http_ssl = parse_url(
                                 fields['uri'].strip())
-                            host.ssl_certs.add(http_address)
+                            host.add_ssl_cert(http_address)
                 if host.srucql_endpoints == {}:
                     del host.srucql_endpoints
-
-            if len(host.ssl_certs) == 0:
-                del host.ssl_certs
-            else:
-                host.ssl_certs = {dns: {
-                        'ssl_cert_address': dns,
-                        'ssl_cert_warn': 30,
-                        'ssl_cert_critical': 10
-                    } for dns in host.ssl_certs
-                }
 
             logging.debug(f'Saving {host.name} host config.')
             logging.debug(host)
@@ -520,6 +535,52 @@ def create_config_from_centerregistry():
             user.groups = list(set(user.groups))
         users[0].save('./conf.d/users.conf',
                       *(users[1:] + [v for v in user_groups.values()]))
+
+
+def update_config_from_switchboard_tool_registry():
+    with TemporaryDirectory() as tmp_dir:
+        repo = git_repo('git@github.com:clarin-eric/switchboard-tool-' +
+                        'registry.git', tmp_dir)
+
+        host_group = HostGroup(name='switchboard-tool-registry',
+                               display_name='Switchboard Tool Registry')
+        hosts = []
+        with os.scandir(tmp_dir) as it:
+            for entry in it:
+                if entry.name.endswith('.json') and entry.is_file():
+                    with open(os.path.join(tmp_dir, entry.name), 'r',
+                              encoding='utf8') as f:
+                        data = json.loads(f.read())
+                        if 'homepage' not in data:
+                            continue
+
+                        logging.info('Generating host config for ' +
+                                     f'{data["name"]}.')
+
+                        name = translit_to_ascii(data['name'].strip())
+                        host = Host(name=name, _import='clarin-generic-host',
+                                    groups=[host_group.name])
+                        host.address, host.http_uri, host.http_ssl = \
+                            parse_url(data['homepage'].strip())
+
+                        if host.http_ssl:
+                            host.add_ssl_cert(host.address)
+
+                        http_address, http_uri, http_ssl = \
+                            parse_url(data['url'].strip())
+                        host.http_vhosts = {data['name']: {
+                            'http_address': http_address,
+                            'http_uri': http_uri,
+                            'http_ssl': http_ssl
+                        }}
+                        if http_ssl:
+                            host.add_ssl_cert(host.address)
+
+                        logging.debug(host)
+                        hosts.append(host)
+
+        logging.debug(f'Saving switchboard tool registry host configs.')
+        host_group.save('./conf.d/', *hosts)
 
 
 if __name__ == '__main__':
@@ -543,5 +604,8 @@ if __name__ == '__main__':
 
     repo = git_repo('git@github.com:clarin-eric/monitoring.git', '.',
                     args.nopull)
+    logging.info('Generating config form center regestry.')
     create_config_from_centerregistry()
+    logging.info('Generating config form switchboard tool registry.')
+    update_config_from_switchboard_tool_registry()
     commit_changes(repo=repo, push_repo=args.push)

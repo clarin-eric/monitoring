@@ -2,17 +2,17 @@ language: python
 
 python:
   - "3.6"
+  - "3.7"
 
 sudo: required
 
 install:
   - pip install -r requirements.txt
-  - pip install pep8
-  - pip install coverage
+  - pip install pycodestyle
 
 script:
  - find . -name "*.py" -exec pep8 {} \;
- - nosetests --with-coverage --cover-package=config_generation,.
+ - config_generation
 
 notifications:
   webhooks:
