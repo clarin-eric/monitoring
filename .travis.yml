@@ -11,8 +11,8 @@ install:
   - pip install pycodestyle
 
 script:
- - find . -name "*.py" -exec pep8 {} \;
- - python3 config_generation.py
+ - find . -name "*.py" -exec pycodestyle {} \;
+ - python3 update_config.py
 
 notifications:
   webhooks:
