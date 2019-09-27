@@ -539,7 +539,7 @@ def create_config_from_centerregistry():
 
 def update_config_from_switchboard_tool_registry():
     with TemporaryDirectory() as tmp_dir:
-        repo = git_repo('git@github.com:clarin-eric/switchboard-tool-' +
+        repo = git_repo('https://github.com/clarin-eric/switchboard-tool-' +
                         'registry.git', tmp_dir)
 
         host_group = HostGroup(name='switchboard-tool-registry',
