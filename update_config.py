@@ -393,6 +393,22 @@ def commit_changes(repo, push_repo=False):
         logging.info(f'No changes, nothing to commit.')
 
 
+def load_users(path='./conf.d/users.conf'):
+    logging.info('Load exinting users config from conf.d.')
+    return {user.email: user for user in User.load(path)}, \
+        {group.name: group for group in UserGroup.load(path)}
+
+
+def save_users(users, user_groups):
+    logging.info('Saving users conf.')
+    users = [v for v in users.values()]
+    for user in users:
+        if 'groups' in user:
+            user.groups = list(set(user.groups))
+    users[0].save('./conf.d/users.conf',
+                  *(users[1:] + [v for v in user_groups.values()]))
+
+
 def merge_centerregistry_users(users):
     """Merge icinga users with users from Centre Registry.
 
@@ -441,10 +457,7 @@ def merge_centerregistry_users(users):
 
 
 def create_config_from_centerregistry():
-    logging.info('Load exinting users config from conf.d.')
-    users = {user.email: user for user in User.load('./conf.d/users.conf')}
-    user_groups = {group.name: group
-                   for group in UserGroup.load('./conf.d/users.conf')}
+    users, user_groups = load_users()
     if fetch_centre_registry('Centre') and fetch_centre_registry('Contact'):
         oai_success = fetch_centre_registry('OAIPMHEndpoint')
         cql_success = fetch_centre_registry('FCSEndpoint')
@@ -529,15 +542,11 @@ def create_config_from_centerregistry():
             logging.debug(host)
             host_group.save('./conf.d/hosts', host)
 
-        logging.info('Saving users conf.')
-        users = [v for v in users.values()]
-        for user in users:
-            user.groups = list(set(user.groups))
-        users[0].save('./conf.d/users.conf',
-                      *(users[1:] + [v for v in user_groups.values()]))
+        save_users(users, user_groups)
 
 
 def update_config_from_switchboard_tool_registry():
+    users, user_groups = load_users()
     with TemporaryDirectory() as tmp_dir:
         repo = git_repo('https://github.com/clarin-eric/switchboard-tool-' +
                         'registry.git', tmp_dir)
@@ -573,14 +582,27 @@ def update_config_from_switchboard_tool_registry():
                             'http_uri': http_uri,
                             'http_ssl': http_ssl
                         }}
+                        if data['authentication'].startswith('Yes.'):
+                            host.http_vhosts[data['name']]['http_expect'] = \
+                                '401 UNAUTHORIZED'
                         if http_ssl:
                             host.add_ssl_cert(host.address)
 
+                        email = data['contact']['email']
+                        name = data['contact']['person']
+                        if email not in users:
+                            users[email] = User(name=email, display_name=name,
+                                                _import='generic-user',
+                                                email=email)
+                        host.notification = {'mail': {'users': [email]}}
+
+                        logging.debug(users[email])
                         logging.debug(host)
                         hosts.append(host)
 
         logging.debug(f'Saving switchboard tool registry host configs.')
         host_group.save('./conf.d/', *hosts)
+        save_users(users, user_groups)
 
 
 if __name__ == '__main__':
