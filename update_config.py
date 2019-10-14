@@ -120,6 +120,8 @@ class Config(dict):
                         else:
                             lines.append(line)
                     lines.append('}\n')
+                elif v is None:
+                    continue
                 else:
                     lines.append(f'{k} = {escape(v)}\n')
             return lines
