@@ -257,22 +257,13 @@ class Host(Config):
 
     def add_ssl_cert(self, dns):
         if 'ssl_certs' not in self:
-            self.ssl_certs = set()
-        self.ssl_certs.add(dns)
-
-    def items(self):
-        for k, v in super(Host, self).items():
-            if k == 'vars.ssl_certs':
-                if len(v) == 0:
-                    continue
-                else:
-                    yield k, {dns: {
-                        'ssl_cert_address': dns,
-                        'ssl_cert_warn': 30,
-                        'ssl_cert_critical': 10
-                    } for dns in v}
-            else:
-                yield k, v
+            self.ssl_certs = {}
+        self.ssl_certs[dns] = {
+            'ssl_cert_address': dns,
+            'ssl_cert_cn': dns,
+            'ssl_cert_warn': 30,
+            'ssl_cert_critical': 10
+        }
 
 
 class HostGroup(Config):
@@ -351,34 +342,37 @@ def translit_to_ascii(text):
     return stdoutdata.decode(encoding='utf-8')
 
 
-def git_repo(repourl, repopath, pull_repo=True):
+def git_repo(url, path, pull=True):
     """Load our repo from github or, if its there, get the updates.
-    If there is a directory under repopath that is not a git repo, crash.
+    If there is a directory under path that is not a git repo, crash.
 
     Args:
-        repourl: Repository URL
-        repopath: Local path
+        url: Repository URL
+        path: Local path
+        pull: pull changes?
 
     Return:
         GitPython repo object
     """
     try:
-        repo = Repo.clone_from(repourl, repopath)
+        logging.info(f'Clone repository {url} to {path}.')
+        repo = Repo.clone_from(url, path)
     except GitCommandError:
-        logging.error('Repository already there.')
-        repo = Repo(repopath)
-        if pull_repo:
+        logging.info('Repository already exists.')
+        repo = Repo(path)
+        if pull:
+            logging.info(f'Pull changes.')
             github = repo.remote('origin')
             github.pull()
     return repo
 
 
-def commit_changes(repo, push_repo=False):
+def commit_changes(repo, push=False):
     """Add new files, commit, push.
 
     Args:
         repo: GitPython repo object
-        push_repo: whether to push the changes or not.
+        push: whether to push the changes or not.
     """
     if repo.is_dirty(untracked_files=True):
         repo.index.add(repo.untracked_files)
@@ -388,27 +382,84 @@ def commit_changes(repo, push_repo=False):
         logging.info(f'Found changes, commit changes.')
         repo.index.commit('Information from Centre Registry updated.')
 
-        if push_repo:
+        if push:
             logging.info(f'Push to origin.')
             repo.remote('origin').push()
     else:
         logging.info(f'No changes, nothing to commit.')
 
 
+def load_hosts(path='./conf.d/hosts/'):
+    """Load hosts and host groups from config.
+
+    Args:
+        path: path to host config dir
+
+    Return:
+        dict of hosts, dict of host groups
+    """
+    logging.info(f'Load exinting host configs from {path}.')
+    hosts = {}
+    host_groups = {}
+    with os.scandir(path) as it:
+        for entry in it:
+            if entry.name.endswith('.conf') and entry.is_file():
+                for cfg in Config.load(entry.path):
+                    if type(cfg) == Host:
+                        hosts[cfg.name] = cfg
+                    elif type(cfg) == HostGroup:
+                        host_groups[cfg.name] = cfg
+    logging.info(f'Found {len(hosts)} hosts and {len(host_groups)} host ' +
+                 'groups.')
+    return hosts, host_groups
+
+
 def load_users(path='./conf.d/users.conf'):
-    logging.info('Load exinting users config from conf.d.')
+    """Load users from config.
+
+    Args:
+        path: path to user config
+
+    Return:
+        dict of users, dict of user groups
+    """
+    logging.info(f'Load exinting users config from {path}.')
     return {user.email: user for user in User.load(path)}, \
         {group.name: group for group in UserGroup.load(path)}
 
 
-def save_users(users, user_groups):
-    logging.info('Saving users conf.')
+def save_users(users, groups, groups_to_del=set(), path='./conf.d/users.conf'):
+    """Save users and user groups.
+
+    Args:
+        users: dict of users
+        groups: dict of user groups
+        groups_to_del: user groups to remove, if a user has only groups which
+                       are deleted the user gets also removed.
+        path: path to user config
+    """
     users = [v for v in users.values()]
+
+    for k in groups_to_del:
+        if k in groups:
+            logging.info(f'Remove user group {k}.')
+            del groups[k]
+
     for user in users:
         if 'groups' in user:
             user.groups = list(set(user.groups))
-    users[0].save('./conf.d/users.conf',
-                  *(users[1:] + [v for v in user_groups.values()]))
+            if len(user.groups) > 0:
+                for k in groups_to_del:
+                    if k in user.groups:
+                        user.groups.remove(k)
+                if len(user.groups) == 0:
+                    logging.info(f'Remove user {user.name}.')
+                    users.remove(user)
+            else:
+                del user.groups
+
+    logging.info(f'Saving users config to {path}.')
+    users[0].save(path, *(users[1:] + [v for v in groups.values()]))
 
 
 def merge_centerregistry_users(users):
@@ -446,35 +497,54 @@ def merge_centerregistry_users(users):
             users[email].display_name = name
             users[email].telephone_number = telephone_number
             users[email].website_url = website_url
-            logging.info(f'Update icinga user {email}.')
+            logging.info(f'Update user {email}.')
             logging.debug(users[email])
         else:
             users[email] = User(name=email, display_name=name,
                                 _import='generic-user', email=email,
                                 telephone_number=telephone_number,
                                 website_url=website_url, groups=[])
-            logging.info(f'Create new user {email}.')
+            logging.info(f'Create user {email}.')
             logging.debug(users[email])
     return ids
 
 
-def create_config_from_centerregistry():
+def config_from_centerregistry():
+    """Creates config from center registry."""
+
+    logging.info('Generate config form center regestry.')
+
     users, user_groups = load_users()
+    hosts, host_groups = load_hosts()
     if fetch_centre_registry('Centre') and fetch_centre_registry('Contact'):
         oai_success = fetch_centre_registry('OAIPMHEndpoint')
         cql_success = fetch_centre_registry('FCSEndpoint')
         ids = merge_centerregistry_users(users)
 
         for i, centre in enumerate(REGISTRY['Centre']):
-            logging.info('Generating host config for ' +
-                         f'{centre["fields"]["name"].strip()}.')
+            logging.info(f'Centre registry {centre["fields"]["name"].strip()}')
 
             name = translit_to_ascii(centre['fields']['shorthand'].strip())
             display_name = centre['fields']['name'].strip()
 
-            host = Host(name=name, display_name=display_name,
-                        _import='clarin-generic-host')
-            host_group = HostGroup(name=name, display_name=display_name)
+            if name in hosts:
+                logging.info(f'Update host {name}.')
+                host = hosts[name]
+                host.display_name = display_name
+                del hosts[name]
+            else:
+                logging.info(f'Create host {name}.')
+                host = Host(name=name, display_name=display_name,
+                            _import='clarin-generic-host')
+
+            if name in host_groups:
+                logging.info(f'Update host group {name}.')
+                host_group = host_groups[name]
+                host_group.display_name = display_name
+                del host_groups[name]
+            else:
+                logging.info(f'Create host group {name}.')
+                host_group = HostGroup(name=name, display_name=display_name)
             host.groups = [host_group.name]
 
             if name not in user_groups:
@@ -544,15 +614,26 @@ def create_config_from_centerregistry():
             logging.debug(host)
             host_group.save('./conf.d/hosts', host)
 
-        save_users(users, user_groups)
+        for k in set(list(hosts.keys()) + list(host_groups.keys())):
+            logging.info(f'Remove ./conf.d/hosts/{k}.conf config file.')
+            os.remove(os.path.join('./conf.d/hosts', f'{k}.conf'))
+
+        save_users(users, user_groups,
+                   set(list(hosts.keys()) + list(host_groups.keys())))
 
 
-def update_config_from_switchboard_tool_registry():
+def config_from_switchboard_tool_registry():
+    """Creates config from switchboard-tool-registry repo."""
+
+    logging.info('Generate config form switchboard-tool-registry repo.')
+
     users, user_groups = load_users()
+    switchboard_users = set()
     with TemporaryDirectory() as tmp_dir:
         repo = git_repo('https://github.com/clarin-eric/switchboard-tool-' +
                         'registry.git', tmp_dir)
 
+        logging.info('Create host group Switchboard Tool Registry.')
         host_group = HostGroup(name='switchboard-tool-registry',
                                display_name='Switchboard Tool Registry')
         hosts = []
@@ -561,14 +642,14 @@ def update_config_from_switchboard_tool_registry():
                 if entry.name.endswith('.json') and entry.is_file():
                     with open(os.path.join(tmp_dir, entry.name), 'r',
                               encoding='utf8') as f:
+                        logging.info(f'Switchboard Tool Registry {entry.name}')
+
                         data = json.loads(f.read())
                         if 'homepage' not in data:
                             continue
 
-                        logging.info('Generating host config for ' +
-                                     f'{data["name"]}.')
-
                         name = translit_to_ascii(data['name'].strip())
+                        logging.info(f'Create host {name}.')
                         host = Host(name=name, _import='clarin-generic-host',
                                     groups=[host_group.name])
                         host.address, host.http_uri, host.http_ssl = \
@@ -592,18 +673,38 @@ def update_config_from_switchboard_tool_registry():
 
                         email = data['contact']['email']
                         name = data['contact']['person']
+                        switchboard_users.add(email)
                         if email not in users:
+                            logging.info(f'Create user {email}.')
                             users[email] = User(name=email, display_name=name,
                                                 _import='generic-user',
-                                                email=email)
+                                                email=email,
+                                                groups=[host_group.name])
+                        else:
+                            logging.info(f'Update user {email}.')
+                            users[email].display_name = name
+                            if 'groups' in users[email]:
+                                if host_group.name not in users[email].groups:
+                                    users[email].groups.append(host_group.name)
+                            else:
+                                users[email].groups = [host_group.name]
                         host.notification = {'mail': {'users': [email]}}
 
                         logging.debug(users[email])
                         logging.debug(host)
                         hosts.append(host)
 
-        logging.debug(f'Saving switchboard tool registry host configs.')
-        host_group.save('./conf.d/', *hosts)
+        logging.info(f'Saving switchboard tool registry host configs.')
+        host_group.save('./conf.d/', *sorted(hosts, key=lambda x: x.name))
+
+        for k in users.keys():
+            if 'groups' in users[k] and host_group.name in users[k].groups:
+                if users[k].name not in switchboard_users:
+                    if len(users[k].groups) == 1:
+                        logging.info(f'Remove user {users[k].name}.')
+                        del users[k]
+                    else:
+                        users[k].groups.remove(host_group.name)
         save_users(users, user_groups)
 
 
@@ -628,8 +729,6 @@ if __name__ == '__main__':
 
     repo = git_repo('git@github.com:clarin-eric/monitoring.git', '.',
                     args.nopull)
-    logging.info('Generating config form center regestry.')
-    create_config_from_centerregistry()
-    logging.info('Generating config form switchboard tool registry.')
-    update_config_from_switchboard_tool_registry()
-    commit_changes(repo=repo, push_repo=args.push)
+    config_from_centerregistry()
+    config_from_switchboard_tool_registry()
+    commit_changes(repo, args.push)
