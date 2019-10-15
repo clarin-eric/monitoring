@@ -376,7 +376,13 @@ def commit_changes(repo, push=False):
     """
     if repo.is_dirty(untracked_files=True):
         repo.index.add(repo.untracked_files)
-        repo.index.add([i.a_path for i in repo.index.diff(None)])
+        for f in repo.index.diff(None):
+            if f.change_type == 'D':
+                logging.debug(f'Remove file from git {f.a_path}.')
+                repo.index.remove([f.a_path])
+            else:
+                logging.debug(f'Add file from git {f.a_path}.')
+                repo.index.add([f.a_path])
 
         now = datetime.now()
         logging.info(f'Found changes, commit changes.')
