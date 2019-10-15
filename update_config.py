@@ -566,6 +566,7 @@ def config_from_centerregistry():
 
             host.address, host.http_uri, host.http_ssl = parse_url(
                 centre['fields']['website_url'].strip())
+            host.http_vhost = host.address
             if host.http_ssl:
                 host.add_ssl_cert(host.address)
 
