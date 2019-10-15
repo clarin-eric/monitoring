@@ -261,6 +261,7 @@ class Host(Config):
         self.ssl_certs[dns] = {
             'ssl_cert_address': dns,
             'ssl_cert_cn': dns,
+            'ssl_cert_altnames': True,
             'ssl_cert_warn': 30,
             'ssl_cert_critical': 10
         }
