@@ -679,22 +679,27 @@ def config_from_switchboard_tool_registry():
 
                         email = data['contact']['email']
                         name = data['contact']['person']
-                        switchboard_users.add(email)
-                        if email not in users:
-                            logging.info(f'Create user {email}.')
-                            users[email] = User(name=email, display_name=name,
-                                                _import='generic-user',
-                                                email=email,
-                                                groups=[host_group.name])
-                        else:
-                            logging.info(f'Update user {email}.')
-                            users[email].display_name = name
-                            if 'groups' in users[email]:
-                                if host_group.name not in users[email].groups:
-                                    users[email].groups.append(host_group.name)
+
+                        if email != 'Unknown email' and email is not None:
+                            switchboard_users.add(email)
+                            if email not in users:
+                                logging.info(f'Create user {email}.')
+                                users[email] = User(name=email,
+                                                    display_name=name,
+                                                    _import='generic-user',
+                                                    email=email,
+                                                    groups=[host_group.name])
                             else:
-                                users[email].groups = [host_group.name]
-                        host.notification = {'mail': {'users': [email]}}
+                                logging.info(f'Update user {email}.')
+                                users[email].display_name = name
+                                if 'groups' in users[email]:
+                                    if host_group.name not in \
+                                            users[email].groups:
+                                        users[email].groups.append(
+                                            host_group.name)
+                                else:
+                                    users[email].groups = [host_group.name]
+                            host.notification = {'mail': {'users': [email]}}
 
                         logging.debug(users[email])
                         logging.debug(host)
@@ -703,14 +708,17 @@ def config_from_switchboard_tool_registry():
         logging.info(f'Saving switchboard tool registry host configs.')
         host_group.save('./conf.d/', *sorted(hosts, key=lambda x: x.name))
 
+        to_del = []
         for k in users.keys():
             if 'groups' in users[k] and host_group.name in users[k].groups:
                 if users[k].name not in switchboard_users:
                     if len(users[k].groups) == 1:
-                        logging.info(f'Remove user {users[k].name}.')
-                        del users[k]
+                        to_del.append(k)
                     else:
                         users[k].groups.remove(host_group.name)
+        for k in to_del:
+            logging.info(f'Remove user {users[k].name}.')
+            del users[k]
         save_users(users, user_groups)
 
 
