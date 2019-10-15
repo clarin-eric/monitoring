@@ -677,7 +677,7 @@ def config_from_switchboard_tool_registry():
                             host.http_vhosts[data['name']]['http_expect'] = \
                                 '401 UNAUTHORIZED'
                         if http_ssl:
-                            host.add_ssl_cert(host.address)
+                            host.add_ssl_cert(http_address)
 
                         email = data['contact']['email']
                         name = data['contact']['person']
