@@ -700,9 +700,9 @@ def config_from_switchboard_tool_registry():
                                             host_group.name)
                                 else:
                                     users[email].groups = [host_group.name]
+                            logging.debug(users[email])
                             host.notification = {'mail': {'users': [email]}}
 
-                        logging.debug(users[email])
                         logging.debug(host)
                         hosts.append(host)
 
