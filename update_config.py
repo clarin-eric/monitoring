@@ -653,9 +653,6 @@ def config_from_switchboard_tool_registry():
                         logging.info(f'Switchboard Tool Registry {entry.name}')
 
                         data = json.loads(f.read())
-                        if 'homepage' not in data:
-                            continue
-
                         name = translit_to_ascii(data['name'].strip())
                         logging.info(f'Create host {name}.')
                         host = Host(name=name, _import='clarin-generic-host',
@@ -681,29 +678,24 @@ def config_from_switchboard_tool_registry():
 
                         email = data['contact']['email']
                         name = data['contact']['person']
-
-                        if email != 'Unknown email' and email is not None:
-                            switchboard_users.add(email)
-                            if email not in users:
-                                logging.info(f'Create user {email}.')
-                                users[email] = User(name=email,
-                                                    display_name=name,
-                                                    _import='generic-user',
-                                                    email=email,
-                                                    groups=[host_group.name])
+                        switchboard_users.add(email)
+                        if email not in users:
+                            logging.info(f'Create user {email}.')
+                            users[email] = User(name=email, display_name=name,
+                                                _import='generic-user',
+                                                email=email,
+                                                groups=[host_group.name])
+                        else:
+                            logging.info(f'Update user {email}.')
+                            users[email].display_name = name
+                            if 'groups' in users[email]:
+                                if host_group.name not in users[email].groups:
+                                    users[email].groups.append(host_group.name)
                             else:
-                                logging.info(f'Update user {email}.')
-                                users[email].display_name = name
-                                if 'groups' in users[email]:
-                                    if host_group.name not in \
-                                            users[email].groups:
-                                        users[email].groups.append(
-                                            host_group.name)
-                                else:
-                                    users[email].groups = [host_group.name]
-                            logging.debug(users[email])
-                            host.notification = {'mail': {'users': [email]}}
+                                users[email].groups = [host_group.name]
+                        host.notification = {'mail': {'users': [email]}}
 
+                        logging.debug(users[email])
                         logging.debug(host)
                         hosts.append(host)
 
