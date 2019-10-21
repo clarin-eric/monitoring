@@ -82,8 +82,8 @@ if __name__ == '__main__':
                       f"'size'={len(r.content)}B 'time'={runtime}ms")
                 sys.exit(STATE_OK[0])
         else:
-            print(f'OAI-PMH {STATE_CRITICAL[1]}: {r.status_code}|' +
-                  f"'time'={runtime}ms")
+            print(f'OAI-PMH {STATE_CRITICAL[1]}: HTTP Response ' +
+                  f"{r.status_code}|'time'={runtime}ms")
             sys.exit(STATE_CRITICAL[0])
     except etree.XMLSyntaxError as e:
         print(f'OAI-PMH {STATE_CRITICAL[1]}: XML syntax error {e}')
