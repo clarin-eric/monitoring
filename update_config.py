@@ -670,7 +670,7 @@ def config_from_switchboard_tool_registry():
                             'http_uri': http_uri,
                             'http_ssl': http_ssl
                         }}
-                        if data['authentication'].startswith('Yes.'):
+                        if data['authentication'].startswith('Yes.') and http_address != 'webservices-lst.science.ru.nl':
                             host.http_vhosts[data['name']]['http_expect'] = \
                                 '401 UNAUTHORIZED'
                         if http_ssl:
