@@ -645,10 +645,10 @@ def config_from_switchboard_tool_registry():
         host_group = HostGroup(name='switchboard-tool-registry',
                                display_name='Switchboard Tool Registry')
         hosts = []
-        with os.scandir(tmp_dir) as it:
+        with os.scandir(os.path.join(tmp_dir, 'tools')) as it:
             for entry in it:
                 if entry.name.endswith('.json') and entry.is_file():
-                    with open(os.path.join(tmp_dir, entry.name), 'r',
+                    with open(os.path.join(tmp_dir, 'tools', entry.name), 'r',
                               encoding='utf8') as f:
                         logging.info(f'Switchboard Tool Registry {entry.name}')
 
@@ -670,7 +670,9 @@ def config_from_switchboard_tool_registry():
                             'http_uri': http_uri,
                             'http_ssl': http_ssl
                         }}
-                        if data['authentication'].startswith('Yes.') and http_address != 'webservices-lst.science.ru.nl':
+                        if data['authentication'].startswith('Yes.') and \
+                                http_address != \
+                                'webservices-lst.science.ru.nl':
                             host.http_vhosts[data['name']]['http_expect'] = \
                                 '401 UNAUTHORIZED'
                         if http_ssl:
