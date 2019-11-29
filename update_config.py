@@ -661,7 +661,7 @@ def config_from_switchboard_tool_registry():
                 parse_url(tool['url'].strip())
             host.http_vhosts = {name: {
                 'http_address': http_address,
-                'http_vhost': http_vhost,
+                'http_vhost': http_address,
                 'http_uri': http_uri,
                 'http_ssl': http_ssl
             }}
