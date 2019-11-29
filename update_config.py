@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import json
 import logging
 import os
 import re
@@ -12,7 +11,6 @@ from datetime import datetime
 from git import Repo
 from git.exc import GitCommandError
 from subprocess import Popen, PIPE
-from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
 
 
@@ -307,6 +305,8 @@ def fetch_centre_registry(key):
         REGISTRY[key] = r.json()
         return True
     else:
+        logging.error('Error fetching https://centres.clarin.eu/api/model/' +
+                      f'{key:s}, status code: {r.status_code}.')
         return False
 
 
@@ -632,74 +632,66 @@ def config_from_centerregistry():
 
 def config_from_switchboard_tool_registry():
     """Creates config from switchboard-tool-registry repo."""
-
     logging.info('Generate config form switchboard-tool-registry repo.')
 
     users, user_groups = load_users()
     switchboard_users = set()
-    with TemporaryDirectory() as tmp_dir:
-        repo = git_repo('https://github.com/clarin-eric/switchboard-tool-' +
-                        'registry.git', tmp_dir)
 
-        logging.info('Create host group Switchboard Tool Registry.')
-        host_group = HostGroup(name='switchboard-tool-registry',
-                               display_name='Switchboard Tool Registry')
-        hosts = []
-        with os.scandir(os.path.join(tmp_dir, 'tools')) as it:
-            for entry in it:
-                if entry.name.endswith('.json') and entry.is_file():
-                    with open(os.path.join(tmp_dir, 'tools', entry.name), 'r',
-                              encoding='utf8') as f:
-                        logging.info(f'Switchboard Tool Registry {entry.name}')
+    logging.info('Create host group Switchboard Tool Registry.')
+    host_group = HostGroup(name='switchboard-tool-registry',
+                           display_name='Switchboard Tool Registry')
+    hosts = []
 
-                        data = json.loads(f.read())
-                        name = translit_to_ascii(data['name'].strip())
-                        logging.info(f'Create host {name}.')
-                        host = Host(name=name, _import='clarin-generic-host',
+    r = requests.get(f'https://switchboard.clarin.eu/api/tools/')
+    if r.status_code == requests.codes.ok:
+        for tool in r.json():
+            name = translit_to_ascii(tool['name'].strip())
+
+            logging.info(f'Switchboard Tool Registry {name}')
+            logging.info(f'Create host {name}.')
+            host = Host(name=name, _import='clarin-generic-host',
+                        groups=[host_group.name])
+            host.address, host.http_uri, host.http_ssl = \
+                parse_url(tool['homepage'].strip())
+
+            if host.http_ssl:
+                host.add_ssl_cert(host.address)
+
+            http_address, http_uri, http_ssl = \
+                parse_url(tool['url'].strip())
+            host.http_vhosts = {name: {
+                'http_address': http_address,
+                'http_uri': http_uri,
+                'http_ssl': http_ssl
+            }}
+            if tool['authentication'].startswith('Yes.') and \
+                    http_address != 'webservices-lst.science.ru.nl':
+                host.http_vhosts[tool['name']]['http_expect'] = \
+                    '401 UNAUTHORIZED'
+            if http_ssl:
+                host.add_ssl_cert(http_address)
+
+            email = tool['contact']['email']
+            name = tool['contact']['person']
+            switchboard_users.add(email)
+            if email not in users:
+                logging.info(f'Create user {email}.')
+                users[email] = User(name=email, display_name=name,
+                                    _import='generic-user', email=email,
                                     groups=[host_group.name])
-                        host.address, host.http_uri, host.http_ssl = \
-                            parse_url(data['homepage'].strip())
+            else:
+                logging.info(f'Update user {email}.')
+                users[email].display_name = name
+                if 'groups' in users[email]:
+                    if host_group.name not in users[email].groups:
+                        users[email].groups.append(host_group.name)
+                else:
+                    users[email].groups = [host_group.name]
+            host.notification = {'mail': {'users': [email]}}
 
-                        if host.http_ssl:
-                            host.add_ssl_cert(host.address)
-
-                        http_address, http_uri, http_ssl = \
-                            parse_url(data['url'].strip())
-                        host.http_vhosts = {data['name']: {
-                            'http_address': http_address,
-                            'http_uri': http_uri,
-                            'http_ssl': http_ssl
-                        }}
-                        if data['authentication'].startswith('Yes.') and \
-                                http_address != \
-                                'webservices-lst.science.ru.nl':
-                            host.http_vhosts[data['name']]['http_expect'] = \
-                                '401 UNAUTHORIZED'
-                        if http_ssl:
-                            host.add_ssl_cert(http_address)
-
-                        email = data['contact']['email']
-                        name = data['contact']['person']
-                        switchboard_users.add(email)
-                        if email not in users:
-                            logging.info(f'Create user {email}.')
-                            users[email] = User(name=email, display_name=name,
-                                                _import='generic-user',
-                                                email=email,
-                                                groups=[host_group.name])
-                        else:
-                            logging.info(f'Update user {email}.')
-                            users[email].display_name = name
-                            if 'groups' in users[email]:
-                                if host_group.name not in users[email].groups:
-                                    users[email].groups.append(host_group.name)
-                            else:
-                                users[email].groups = [host_group.name]
-                        host.notification = {'mail': {'users': [email]}}
-
-                        logging.debug(users[email])
-                        logging.debug(host)
-                        hosts.append(host)
+            logging.debug(users[email])
+            logging.debug(host)
+            hosts.append(host)
 
         logging.info(f'Saving switchboard tool registry host configs.')
         host_group.save('./conf.d/', *sorted(hosts, key=lambda x: x.name))
@@ -716,6 +708,9 @@ def config_from_switchboard_tool_registry():
             logging.info(f'Remove user {users[k].name}.')
             del users[k]
         save_users(users, user_groups)
+    else:
+        logging.error('Error while fetching switchboard api, status ' +
+                      f'code {r.status_code}.')
 
 
 if __name__ == '__main__':
