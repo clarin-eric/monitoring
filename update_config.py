@@ -548,6 +548,8 @@ def config_from_centerregistry():
                 logging.info(f'Update host group {name}.')
                 host_group = host_groups[name]
                 host_group.display_name = display_name
+                if name == 'BAS':
+                    host.max_check_attempts = 2
                 del host_groups[name]
             else:
                 logging.info(f'Create host group {name}.')
