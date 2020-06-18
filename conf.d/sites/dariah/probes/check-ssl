@@ -1,0 +1,38 @@
+#!/usr/bin/perl
+
+# initial version by bernd.schloer@gwdg.de, 2018-06-14
+
+$num_args = $#ARGV + 1;
+
+if ($num_args != 1) {
+  print "\nUsage: check-ssl hostname\n";
+  exit 3;
+}
+
+
+$HOSTNAME = $ARGV[0];
+$PATTERN = "OK|curl|openssl|Kein\ Server-Zertifikat\ der\ DFN-PKI|Tippfehler";
+$PATTERN_CRIT = "Not\ OK|curl|openssl|Kein\ Server-Zertifikat\ der\ DFN-PKI|Tippfehler";
+
+$MONITORING_COMMAND = "/etc/icinga2/conf.d/dariah/probes/testserver.sh $HOSTNAME | egrep '$PATTERN' | tr '\n' ' ' 2>/dev/null";
+open OUT, "$MONITORING_COMMAND|";
+while (defined (my $line = <OUT>)) {
+	$result .= $line;
+}
+close OUT;
+
+if (!(defined $result)) {
+	print "CRITICAL Error in testserver.sh. Please run manually. Command was: $MONITORING_COMMAND";
+	exit 2;
+} else {
+	if ($result =~ /$PATTERN_CRIT/) 
+	{
+		print "SSL-Certificate CRITICAL: $result";
+		exit 2;
+	} 
+	else 
+	{
+		print "SSL Certificate $result";
+		exit 0;
+	}
+}
