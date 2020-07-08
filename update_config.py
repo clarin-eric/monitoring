@@ -585,13 +585,7 @@ def config_from_centerregistry():
                         logging.debug(f'Add OAI-PMH endpoint {item["pk"]}: ' +
                                       f'{fields["uri"]}')
                         host.oaipmh_endpoints[f'{item["pk"]}'] = {
-                            'oaipmh_endpoint': fields['uri'],
-                            'oaipmh_metadata_format':
-                                fields['metadata_format'],
-                            'oaipmh_web_services_set':
-                                fields['web_services_set'],
-                            'oaipmh_web_services_type':
-                                fields['web_services_type']
+                            'oaipmh_endpoint': fields['uri']
                         }
 
                         if fields['uri'].startswith('https://'):
@@ -726,8 +720,8 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--nopull', help="Don't pull Git repository.",
                         action='store_false')
-    parser.add_argument('--nocleanup', help="Don't remove repo after push.",
-                        action='store_true')
+    parser.add_argument('--nocommit', help="Don't commit chnages.",
+                        action='store_false')
     args = parser.parse_args()
 
     if args.verbose:
@@ -739,4 +733,5 @@ if __name__ == '__main__':
                     args.nopull)
     config_from_centerregistry()
     config_from_switchboard_tool_registry()
-    commit_changes(repo, args.push)
+    if args.nocommit:
+        commit_changes(repo, args.push)
