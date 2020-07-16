@@ -21,11 +21,11 @@ from lxml import etree
 metadatastring=u'''${1}'''
 SSLRESULT = etree.fromstring(metadatastring)
 CERT = SSLRESULT.xpath('/md:EntityDescriptor/md:SPSSODescriptor/md:KeyDescriptor/ds:KeyInfo/ds:X509Data/ds:X509Certificate', namespaces={'md':'urn:oasis:names:tc:SAML:2.0:metadata', 'ds':'http://www.w3.org/2000/09/xmldsig#'})[0].text
-print '-----BEGIN CERTIFICATE-----'
-print CERT.strip()
-print '-----END CERTIFICATE-----'
+print('-----BEGIN CERTIFICATE-----')
+print(CERT.strip())
+print('-----END CERTIFICATE-----')
 "
-  NOTAFTER=`echo "$text" | python - | openssl x509 -text -noout | grep 'Not After' | sed 's/.*Not After : \(.*\)$/\1/'`
+  NOTAFTER=`echo "$text" | python3 - | openssl x509 -text -noout | grep 'Not After' | sed 's/.*Not After : \(.*\)$/\1/'`
   echo $NOTAFTER
 }
 
