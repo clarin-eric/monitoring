@@ -11,6 +11,10 @@ pki
 scripts/mail-host-notification.sh
 scripts/mail-service-notification.sh
 zones.d
+*.orig
+
+# dariah
+conf.d/sites/dariah/passwords/
 
 # python
 *.pyc
