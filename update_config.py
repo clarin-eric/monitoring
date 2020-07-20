@@ -63,7 +63,10 @@ class Config(dict):
 
     def __getitem__(self, key):
         if key in self.config_names:
-            return super(Config, self).__getitem__(key)
+            try:
+                return super(Config, self).__getitem__(key)
+            except KeyError as e:
+                return None
         else:
             return self['vars'][key]
 
@@ -504,6 +507,8 @@ def merge_centerregistry_users(users):
             users[email].display_name = name
             users[email].telephone_number = telephone_number
             users[email].website_url = website_url
+            if users[email].groups is None:
+                users[email].groups = []
             logging.info(f'Update user {email}.')
             logging.debug(users[email])
         else:
