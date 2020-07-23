@@ -16,7 +16,7 @@ before_install:
   - sudo rm -r /etc/icinga/*
 
 install:
-  - git clone https://github.com/$TRAVIS_REPO_SLUG.git /etc/icinga
+  - sudo git clone https://github.com/$TRAVIS_REPO_SLUG.git /etc/icinga
   - cd /etc/icinga
   - pip install -r requirements.txt
   - pip install pycodestyle
