@@ -14,6 +14,9 @@ before_install:
   - sudo apt-get -qq update
   - sudo apt-get -y install icinga2 monitoring-plugins
   - sudo cp -r /etc/icinga2/constants.conf /etc/icinga2/features-available /etc/icinga2/features-enabled .
+  - sudo chown travis:travis .
+  - sudo chmod a+r .
+  - sudo chmod g+w .
   - sudo rm -r /etc/icinga2
   - sudo ln -s $TRAVIS_REPO_SLUG /etc/icinga2
   - sudo ls -alhF /etc/icinga2
