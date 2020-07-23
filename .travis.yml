@@ -12,16 +12,16 @@ before_install:
   - curl https://packages.icinga.com/icinga.key | sudo apt-key add -
   - echo "deb http://packages.icinga.com/ubuntu icinga-bionic main" | sudo tee -a /etc/apt/sources.list
   - sudo apt-get -qq update
-  - sudo apt-get -y install icinga monitoring-plugins
-  - sudo rm -r /etc/icinga/*
+  - sudo apt-get -y install icinga2 monitoring-plugins
+  - sudo rm -r /etc/icinga2/*
 
 install:
-  - sudo git clone https://github.com/$TRAVIS_REPO_SLUG.git /etc/icinga
+  - sudo git clone https://github.com/$TRAVIS_REPO_SLUG.git /etc/icinga2
   - cd /etc/icinga
   - pip install -r requirements.txt
   - pip install pycodestyle
 
 script:
  - find . -name "*.py" -exec pycodestyle {} \;
- - python3 update_config.py --nopull
- - icinga2 daemon -C
+ - sudo python3 update_config.py --nopull
+ - sudo icinga2 daemon -C
