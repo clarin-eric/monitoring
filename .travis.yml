@@ -17,7 +17,6 @@ before_install:
   - sudo rm -r /etc/icinga2
   - sudo ln -s $TRAVIS_REPO_SLUG /etc/icinga2
   - sudo ls -alhF /etc/icinga2
-  - sudo ls -alhF /etc/icinga2/
   - sudo ls -alhF .
 
 install:
