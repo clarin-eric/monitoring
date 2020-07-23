@@ -13,7 +13,7 @@ before_install:
   - echo "deb http://packages.icinga.com/ubuntu icinga-bionic main" | sudo tee -a /etc/apt/sources.list
   - sudo apt-get -qq update
   - sudo apt-get -y install icinga2 monitoring-plugins
-  - sudo rm -r /etc/icinga
+  - sudo rm -r /etc/icinga2
   - sudo ln -s $TRAVIS_REPO_SLUG /etc/icinga
 
 install:
