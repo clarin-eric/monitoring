@@ -17,6 +17,7 @@ before_install:
   - sudo chown -Rc travis:travis ./constants.conf ./features-enabled ./features-available
   - sudo chmod -R a+r ./constants.conf ./features-enabled ./features-available
   - sudo chmod -R g+w ./constants.conf ./features-enabled ./features-available
+  - pwd
   - sudo rm -r /etc/icinga2
   - sudo ln -s . /etc/icinga2
   - sudo ls -alhF /etc/icinga2
