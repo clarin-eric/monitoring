@@ -3,6 +3,7 @@
 .coverage
 
 # icinga
+constants.conf
 conf.d/api-users.conf
 features-available
 features-enabled
