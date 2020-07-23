@@ -6,16 +6,13 @@ python:
   - "3.7"
   - "3.8"
 
-addons:
-  apt:
-    sources:
-      - sourceline: 'deb http://packages.icinga.com/ubuntu icinga-bionic main'
-      key_url: 'https://packages.icinga.com/icinga.key'
-    packages:
-      - icinga
-      - monitoring-plugins
-
 sudo: required
+
+before_script:
+  - curl https://packages.icinga.com/icinga.key | sudo apt-key add -
+  - echo "deb http://packages.icinga.com/ubuntu icinga-bionic main" | sudo tee -a /etc/apt/sources.list
+  - sudo apt-get -qq update
+  - sudo apt-get -y install icinga monitoring-plugins
 
 install:
   - pip install -r requirements.txt
