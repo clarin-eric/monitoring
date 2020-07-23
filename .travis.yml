@@ -29,4 +29,5 @@ install:
 script:
  - find . -name "*.py" -exec pycodestyle {} \;
  - python3 update_config.py --nopull
+ - sudo chown -Rc nagios:nagios /etc/icinga2
  - sudo icinga2 daemon -C
