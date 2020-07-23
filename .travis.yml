@@ -14,7 +14,6 @@ before_install:
   - sudo apt-get -qq update
   - sudo apt-get -y install icinga monitoring-plugins
   - sudo rm -r /etc/icinga/*
-  - sudo ln -s
 
 install:
   - git clone https://github.com/$TRAVIS_REPO_SLUG.git /etc/icinga
