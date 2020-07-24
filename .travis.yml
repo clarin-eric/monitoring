@@ -1,8 +1,10 @@
+dist: bionic
 language: python
 
 python:
   - "3.6"
   - "3.7"
+  - "3.8"
 
 sudo: required
 
@@ -12,4 +14,4 @@ install:
 
 script:
  - find . -name "*.py" -exec pycodestyle {} \;
- - python3 update_config.py
+ - python3 update_config.py --nopull
