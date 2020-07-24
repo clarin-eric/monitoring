@@ -1,4 +1,3 @@
-dist: bionic
 language: python
 
 python:
@@ -9,25 +8,9 @@ python:
 sudo: required
 
 install:
-  - curl https://packages.icinga.com/icinga.key | sudo apt-key add -
-  - echo "deb http://packages.icinga.com/ubuntu icinga-bionic main" | sudo tee -a /etc/apt/sources.list
-  - sudo apt-get -qq update
-  - sudo apt-get -y install icinga2 monitoring-plugins
-  - sudo ls -alhF /etc/icinga2/
-  - sudo cp -r /etc/icinga2/constants.conf /etc/icinga2/features-available /etc/icinga2/features-enabled /etc/icinga2/pki /etc/icinga2/zones.d .
-  # - sudo chmod -R a+r ./constants.conf ./features-enabled ./features-available
-  # - sudo chmod -R g+w ./constants.conf ./features-enabled ./features-available
-  # - sudo chmod -R a+x ./features-enabled ./features-available
-  - sudo rm -r /etc/icinga2
-  - sudo ln -s $(pwd) /etc/icinga2
-  - sudo ls -alhF /etc/icinga2/
-  - sudo ls -alhF /etc/icinga2/features-enabled/
-  - sudo ls -alhF /etc/icinga2/pki/
-  - sudo cat /etc/icinga2/constants.conf
-  # - pip install -r requirements.txt
-  # - pip install pycodestyle
+  - pip install -r requirements.txt
+  - pip install pycodestyle
 
 script:
- # - find . -name "*.py" -exec pycodestyle {} \;
- # - sudo python3 update_config.py --nopull
- - sudo icinga2 daemon -C -x debug
+ - find . -name "*.py" -exec pycodestyle {} \;
+ - sudo python3 update_config.py --nopull
