@@ -21,7 +21,7 @@ install:
   # - sudo chmod -R a+x ./features-enabled ./features-available
   - sudo rm -r /etc/icinga2
   - sudo ln -s $(pwd) /etc/icinga2
-  - sudo chown -Rc root:root /etc/icinga2/
+  - sudo chown -Rc $DOCKER_USERNAME:$DOCKER_USERNAME /etc/icinga2/
   - sudo chmod -R a+r /etc/icinga2
   - sudo ls -alhF /etc/icinga2/
   - sudo ls -alhF /etc/icinga2/features-enabled/
