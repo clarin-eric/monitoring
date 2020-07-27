@@ -28,6 +28,6 @@ install:
   - pip install pycodestyle
 
 script:
- - find . -name "*.py" -exec pycodestyle {} \;
- - python3 update_config.py --nopull
+  # - find . -name "*.py" -exec pycodestyle {} \;
+  # - python3 update_config.py --nopull
  - sudo icinga2 daemon -C -x debug
