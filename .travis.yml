@@ -9,6 +9,7 @@ python:
 sudo: required
 
 install:
+  - echo $DOCKER_USERNAME
   - curl https://packages.icinga.com/icinga.key | sudo apt-key add -
   - echo "deb http://packages.icinga.com/ubuntu icinga-bionic main" | sudo tee -a /etc/apt/sources.list
   - sudo apt-get -qq update
