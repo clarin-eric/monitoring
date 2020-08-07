@@ -20,10 +20,11 @@ The Python program [`update_config.py`] performs a hourly configuration manipula
 4. It then pushes the changes to the Git repository to the `master` branch, if there were changes.
 
 ## Setup
-1. Setup `icinga2`, requires at the moment MySQL/MariaDB due to icingaweb2 modules.
-2. Clone this repo to `/etc/icinga2`. Several config files are overritten by this.
-3. Setup `icingaweb2` with modules:
-   * [reporting](https://github.com/Icinga/icingaweb2-module-reporting)
+1. Setup `icinga2`, requires at the moment MySQL/MariaDB due to icingaweb2 modules. Following instructions from the [docu](https://icinga.com/docs/icinga2/latest/doc/02-installation/).
+2. Clone this repo to `/etc/icinga2`. Several config files are overritten by this. Keep all that are in the gitignore.
+3. Setup (`icingaweb2`)[https://icinga.com/docs/icingaweb2/latest/doc/02-Installation/] with modules:
+   * For authentication setup (Shibboleth)[https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPApacheConfig]
+   * [reporting](https://github.com/Icinga/icingaweb2-module-reporting) including [](https://github.com/Icinga/icingaweb2-module-reporting/pull/64)
    * [idoreports](https://github.com/Icinga/icingaweb2-module-idoreports)
    * [map](https://github.com/nbuchwitz/icingaweb2-module-map)
        * Add `/etc/icingaweb2/modules/map/maps.ini` for the german clarin centres
@@ -35,6 +36,7 @@ The Python program [`update_config.py`] performs a hourly configuration manipula
           hostgroup=(ASV|BAS|BBAW|EKUT|HZSK|IDS|IMS|UdS)
          ```
        * Edit `/usr/share/icingaweb2/modules/map/configuration.php` to add navigation for german map.
+   * Create roles, either by using the web interface or by editing `roles.ini`. Create an `Administrator` role for all adminsitrators and a `Clarin` role for everyone else with just view permissions, e.g. `permissions = "module/idoreports,module/ipl,module/map,module/monitoring,monitoring/command/acknowledge-problem,module/reactbundle,module/reporting,module/translation"`.
 4. Add cronjob to regularly update from centre config.
 ```0 */1 * * * cd /etc/icinga2 && /usr/bin/python3 /etc/icinga2/update_config.py --push && systemctl reload icinga2 >> PATH/cron.log 2>&1```
 
