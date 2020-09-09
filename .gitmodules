@@ -1,0 +1,3 @@
+[submodule "conf.d/users"]
+	path = conf.d/users
+	url = git@github.com:clarin-eric/monitoring-users.git
