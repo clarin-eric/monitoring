@@ -398,14 +398,12 @@ def commit_changes(repo, push=False):
             submodule.module().index.commit('Information from Centre ' +
                                             'Registry updated.')
             submodule.binsha = submodule.module().head.commit.binsha
-            print(submodule.binsha)
             repo.index.add([submodule])
             if push:
                 logging.info(f'{submodule.name}: push to origin.')
                 submodule.module().remote('origin').push()
 
     if repo.is_dirty(untracked_files=True):
-        print(repo.untracked_files)
         repo.index.add(repo.untracked_files)
         for f in repo.index.diff(None):
             if f.change_type == 'D':
@@ -576,9 +574,6 @@ def merge_centerregistry_users(users, user_sources,
         if website_url == '':
             website_url = None
 
-        if email in ['21269777@nwu.ac.za']:
-            print(contact)
-
         ids[contact['pk']] = email
         if email in users:
             users[email].display_name = name
@@ -653,16 +648,6 @@ def config_from_centerregistry():
             administrative_contact_id = centre['fields'][
                 'administrative_contact']
             users[ids[administrative_contact_id]].groups.append(name)
-
-            if name == 'SADiLaR':
-                print(centre['fields'])
-            for k, v in centre['fields'].items():
-                if isinstance(v, dict):
-                    for k2, v2 in v.items():
-                        if v2 == '21269777@nwu.ac.za':
-                            print(centre['fields'])
-                elif v == '21269777@nwu.ac.za':
-                    print(centre['fields'])
 
             host.address, host.http_uri, host.http_ssl = parse_url(
                 centre['fields']['website_url'].strip())
