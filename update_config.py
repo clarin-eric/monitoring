@@ -418,6 +418,9 @@ def commit_changes(repo, push=False):
         logging.info(f'Found changes, commit changes.')
         repo.index.commit('Information from Centre Registry updated.')
 
+        for submodule in repo.submodules:
+            submodule.update()
+
         if push:
             logging.info(f'Push to origin.')
             repo.remote('origin').push()
@@ -635,7 +638,7 @@ def config_from_centerregistry():
             else:
                 logging.info(f'Create host group {name}.')
                 host_group = HostGroup(name=name, display_name=display_name)
-            host.groups = [host_group.name]
+            host.groups = [host_group.name, 'CLARIN']
 
             if name not in user_groups:
                 user_groups[name] = UserGroup(name=name,
@@ -737,7 +740,7 @@ def config_from_switchboard_tool_registry(
             logging.info(f'Switchboard Tool Registry {name}')
             logging.info(f'Create host {name}.')
             host = Host(name=name, _import='clarin-generic-host',
-                        groups=[host_group.name])
+                        groups=[host_group.name, 'CLARIN'])
             host.address, host.http_uri, host.http_ssl = \
                 parse_url(tool['homepage'].strip())
 
