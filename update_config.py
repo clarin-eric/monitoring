@@ -404,25 +404,25 @@ def commit_changes(repo, push=False):
                 logging.info(f'{submodule.name}: push to origin.')
                 submodule.module().remote('origin').push()
 
-    # if repo.is_dirty(untracked_files=True):
-    #     repo.index.add(repo.untracked_files)
-    #     for f in repo.index.diff(None):
-    #         if f.change_type == 'D':
-    #             logging.debug(f'Remove file from git {f.a_path}.')
-    #             repo.index.remove([f.a_path])
-    #         else:
-    #             logging.debug(f'Add file to git {f.a_path}.')
-    #             repo.index.add([f.a_path])
+    if repo.is_dirty(untracked_files=True):
+        repo.index.add(repo.untracked_files)
+        for f in repo.index.diff(None):
+            if f.change_type == 'D':
+                logging.debug(f'Remove file from git {f.a_path}.')
+                repo.index.remove([f.a_path])
+            else:
+                logging.debug(f'Add file to git {f.a_path}.')
+                repo.index.add([f.a_path])
 
-    #     now = datetime.now()
-    #     logging.info(f'Found changes, commit changes.')
-    #     repo.index.commit('Information from Centre Registry updated.')
+        now = datetime.now()
+        logging.info(f'Found changes, commit changes.')
+        repo.index.commit('Information from Centre Registry updated.')
 
-    #     if push:
-    #         logging.info(f'Push to origin.')
-    #         repo.remote('origin').push()
-    # else:
-    #     logging.info(f'No changes, nothing to commit.')
+        if push:
+            logging.info(f'Push to origin.')
+            repo.remote('origin').push()
+    else:
+        logging.info(f'No changes, nothing to commit.')
 
 
 def load_hosts(path='./conf.d/hosts/'):
