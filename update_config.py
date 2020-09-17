@@ -346,7 +346,7 @@ def translit_to_ascii(text):
     return stdoutdata.decode(encoding='utf-8')
 
 
-def git_repo(url, path, pull=True):
+def git_repo(url, path, pull=True, submodule=True):
     """Load our repo from github or, if its there, get the updates.
     If there is a directory under path that is not a git repo, crash.
 
@@ -368,41 +368,45 @@ def git_repo(url, path, pull=True):
             logging.info(f'Pull changes.')
             github = repo.remote('origin')
             github.pull()
-    logging.info('Updating submodules.')
-    for submodule in repo.submodules:
-        submodule.update(to_latest_revision=True)
-        submodule.module().heads.master.checkout()
+    if submodule:
+        logging.info('Updating submodules.')
+        for submodule in repo.submodules:
+            submodule.update(to_latest_revision=True)
+            submodule.module().heads.master.checkout()
     return repo
 
 
-def commit_changes(repo, push=False):
+def commit_changes(repo, submodule=True, push=False):
     """Add new files, commit, push.
 
     Args:
         repo: GitPython repo object
         push: whether to push the changes or not.
     """
-    for submodule in repo.submodules:
-        if submodule.module().is_dirty(untracked_files=True):
-            submodule.module().index.add(submodule.module().untracked_files)
-            for f in submodule.module().index.diff(None):
-                if f.change_type == 'D':
-                    logging.debug(f'{submodule.name}: remove file from git ' +
-                                  f' {f.a_path}.')
-                    submodule.module().index.remove([f.a_path])
-                else:
-                    logging.debug(f'{submodule.name}: add file to git ' +
-                                  f'{f.a_path}.')
-                    submodule.module().index.add([f.a_path])
-            now = datetime.now()
-            logging.info(f'{submodule.name}: found changes, commit changes.')
-            submodule.module().index.commit('Information from Centre ' +
-                                            'Registry updated.')
-            submodule.binsha = submodule.module().head.commit.binsha
-            repo.index.add([submodule])
-            if push:
-                logging.info(f'{submodule.name}: push to origin.')
-                submodule.module().remote('origin').push()
+    if submodule:
+        for submodule in repo.submodules:
+            if submodule.module().is_dirty(untracked_files=True):
+                submodule.module().index.add(
+                    submodule.module().untracked_files)
+                for f in submodule.module().index.diff(None):
+                    if f.change_type == 'D':
+                        logging.debug(f'{submodule.name}: remove file from ' +
+                                      f'git {f.a_path}.')
+                        submodule.module().index.remove([f.a_path])
+                    else:
+                        logging.debug(f'{submodule.name}: add file to git ' +
+                                      f'{f.a_path}.')
+                        submodule.module().index.add([f.a_path])
+                now = datetime.now()
+                logging.info(f'{submodule.name}: found changes, commit ' +
+                             'changes.')
+                submodule.module().index.commit('Information from Centre ' +
+                                                'Registry updated.')
+                submodule.binsha = submodule.module().head.commit.binsha
+                repo.index.add([submodule])
+                if push:
+                    logging.info(f'{submodule.name}: push to origin.')
+                    submodule.module().remote('origin').push()
 
     if repo.is_dirty(untracked_files=True):
         repo.index.add(repo.untracked_files)
@@ -418,8 +422,9 @@ def commit_changes(repo, push=False):
         logging.info(f'Found changes, commit changes.')
         repo.index.commit('Information from Centre Registry updated.')
 
-        for submodule in repo.submodules:
-            submodule.update()
+        if submodule:
+            for submodule in repo.submodules:
+                submodule.update()
 
         if push:
             logging.info(f'Push to origin.')
@@ -477,6 +482,9 @@ def load_users(users_path='./conf.d/users.conf',
 
     logging.info(f'Load exinting user groups config from {user_groups_path}.')
     groups = {group.name: group for group in UserGroup.load(user_groups_path)}
+
+    if not os.path.exists(users_submodule_path):
+        os.makedirs(users_submodule_path)
 
     with os.scandir(users_submodule_path) as it:
         for entry in it:
@@ -818,6 +826,8 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--nopull', help="Don't pull Git repository.",
                         action='store_false')
+    parser.add_argument('--nosubmodule', help="Ignore submodules.",
+                        action='store_false')
     parser.add_argument('--nocommit', help="Don't commit chnages.",
                         action='store_false')
     args = parser.parse_args()
@@ -828,8 +838,8 @@ if __name__ == '__main__':
         logging.basicConfig(format=args.log_format, level=logging.INFO)
 
     repo = git_repo('git@github.com:clarin-eric/monitoring.git', '.',
-                    args.nopull)
+                    args.nopull, args.nosubmodule)
     config_from_centerregistry()
     config_from_switchboard_tool_registry()
     if args.nocommit:
-        commit_changes(repo, args.push)
+        commit_changes(repo, args.nosubmodule, args.push)

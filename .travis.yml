@@ -17,4 +17,4 @@ install:
 
 script:
  - find . -name "*.py" -exec pycodestyle {} \;
- - python3 update_config.py --nopull
+ - python3 update_config.py --nopull --nosubmodule
