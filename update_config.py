@@ -372,7 +372,10 @@ def git_repo(url, path, pull=True, submodule=True):
         logging.info('Updating submodules.')
         for submodule in repo.submodules:
             submodule.update(to_latest_revision=True)
-            submodule.module().heads.master.checkout()
+            if submodul.name == "monitoring-dariah":
+                submodule.module().heads.main.checkout()        
+            else:
+                submodule.module().heads.master.checkout()
     return repo
 
 
