@@ -371,7 +371,7 @@ def git_repo(url, path, pull=True, submodule=True):
     if submodule:
         logging.info('Updating submodules.')
         for submodule in repo.submodules:
-            submodule.update(to_latest_revision=True)
+            submodule.update(to_latest_revision=True,force=True)
             if submodule.name == "conf.d/sites/dariah":
                 submodule.module().heads.main.checkout()        
             else:
