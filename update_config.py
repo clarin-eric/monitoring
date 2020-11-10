@@ -371,11 +371,16 @@ def git_repo(url, path, pull=True, submodule=True):
     if submodule:
         logging.info('Updating submodules.')
         for submodule in repo.submodules:
-            submodule.update(to_latest_revision=True)
+            submodule.update()
             if submodule.name == "conf.d/sites/dariah":
                 submodule.module().heads.main.checkout()        
             else:
                 submodule.module().heads.master.checkout()
+            submodule.remote('origin').pull()
+            submodule.binsha = submodule.module().head.commit.binsha
+            repo.index.add([submodule])
+        if len(repo.index.diff('HEAD')) > 0:
+            repo.index.commit('Update submodules')
     return repo
 
 
