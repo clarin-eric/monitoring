@@ -376,7 +376,7 @@ def git_repo(url, path, pull=True, submodule=True):
                 submodule.module().heads.main.checkout()        
             else:
                 submodule.module().heads.master.checkout()
-            submodule.remote('origin').pull()
+            submodule.module().remote('origin').pull()
             submodule.binsha = submodule.module().head.commit.binsha
             repo.index.add([submodule])
         if len(repo.index.diff('HEAD')) > 0:
