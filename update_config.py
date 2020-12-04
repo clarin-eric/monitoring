@@ -373,7 +373,7 @@ def git_repo(url, path, pull=True, submodule=True):
         for submodule in repo.submodules:
             submodule.update()
             if submodule.name == "conf.d/sites/dariah":
-                submodule.module().heads.main.checkout()        
+                submodule.module().heads.main.checkout()
             else:
                 submodule.module().heads.master.checkout()
             submodule.module().remote('origin').pull()
@@ -748,7 +748,7 @@ def config_from_switchboard_tool_registry(
                            display_name='Switchboard Tool Registry')
     hosts = []
 
-    r = requests.get(f'https://switchboard.clarin.eu/api/tools/')
+    r = requests.get('https://switchboard.clarin.eu/api/tools/')
     if r.status_code == requests.codes.ok:
         for tool in r.json():
             name = translit_to_ascii(tool['name'].strip())
@@ -771,10 +771,9 @@ def config_from_switchboard_tool_registry(
                 'http_uri': http_uri,
                 'http_ssl': http_ssl
             }}
-            if tool['authentication'].startswith('Yes.') and \
-                    http_address != 'webservices-lst.science.ru.nl':
-                host.http_vhosts[tool['name']]['http_expect'] = \
-                    '401 UNAUTHORIZED'
+            if 'authentication' in tool and tool['authentication'].startswith('Yes.') \
+                    and http_address != 'webservices-lst.science.ru.nl':
+                host.http_vhosts[tool['name']]['http_expect'] = '401 UNAUTHORIZED'
             if http_ssl:
                 host.add_ssl_cert(http_address)
 
@@ -804,7 +803,7 @@ def config_from_switchboard_tool_registry(
             logging.debug(host)
             hosts.append(host)
 
-        logging.info(f'Saving switchboard tool registry host configs.')
+        logging.info('Saving switchboard tool registry host configs.')
         host_group.save('./conf.d/', *sorted(hosts, key=lambda x: x.name))
 
         to_del = []
