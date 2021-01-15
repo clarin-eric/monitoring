@@ -764,7 +764,7 @@ def config_from_switchboard_tool_registry(
                 host.add_ssl_cert(host.address)
 
             http_address, http_uri, http_ssl = \
-                parse_url(tool['url'].strip())
+                parse_url(tool['webApplication']['url'].strip())
             host.http_vhosts = {name: {
                 'http_address': http_address,
                 'http_vhost': http_address,
