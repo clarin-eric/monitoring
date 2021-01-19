@@ -661,13 +661,18 @@ def config_from_centerregistry():
                                               display_name=display_name)
             else:
                 user_groups[name].display_name = display_name
+
+            nb_contacts = 0
             for contact_id in centre['fields']['monitoring_contacts']:
                 users[ids[contact_id]].groups.append(name)
+                nb_contacts += 1
+
             tech_contact_id = centre['fields']['technical_contact']
             users[ids[tech_contact_id]].groups.append(name)
-            administrative_contact_id = centre['fields'][
-                'administrative_contact']
-            users[ids[administrative_contact_id]].groups.append(name)
+
+            if nb_contacts == 0 and (tech_contact_id == None or tech_contact_id == ""):
+                administrative_contact_id = centre['fields']['administrative_contact']
+                users[ids[administrative_contact_id]].groups.append(name)
 
             host.address, host.http_uri, host.http_ssl = parse_url(
                 centre['fields']['website_url'].strip())
