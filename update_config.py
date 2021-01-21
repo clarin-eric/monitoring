@@ -257,14 +257,15 @@ class Host(Config):
             self[k] = v
 
     def add_ssl_cert(self, dns):
+        lets_encrypt = ['SADiLaR']
         if 'ssl_certs' not in self:
             self.ssl_certs = {}
         self.ssl_certs[dns] = {
             'ssl_cert_address': dns,
             'ssl_cert_cn': dns,
             'ssl_cert_altnames': True,
-            'ssl_cert_warn': 10,
-            'ssl_cert_critical': 7
+            'ssl_cert_warn': 1 if self.name in lets_encrypt else 10,
+            'ssl_cert_critical': 3 if self.name in lets_encrypt else 7
         }
 
 
