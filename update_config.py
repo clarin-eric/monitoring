@@ -65,7 +65,7 @@ class Config(dict):
         if key in self.config_names:
             try:
                 return super(Config, self).__getitem__(key)
-            except KeyError as e:
+            except KeyError:
                 return None
         else:
             return self['vars'][key]
@@ -537,6 +537,7 @@ def save_users(users, groups, sources, groups_to_del=set(),
             logging.info(f'Remove user group {k}.')
             del groups[k]
 
+    users_to_del = []
     for k, user in users.items():
         if 'groups' in user:
             user.groups = list(set(user.groups))
@@ -546,9 +547,11 @@ def save_users(users, groups, sources, groups_to_del=set(),
                         user.groups.remove(group)
                 if len(user.groups) == 0:
                     logging.info(f'Remove user {user.name}.')
-                    users.remove(k)
+                    users_to_del.append(k)
             else:
                 del user.groups
+    for k in users_to_del:
+        users.pop(k)
 
     groups = [group for group in groups.values()]
     groups[0].save(user_groups_path, *(groups[1:]))
