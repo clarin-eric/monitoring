@@ -5,8 +5,7 @@ RUN apt-get update \
         wget \
         icinga2-bin
 
-RUN wget https://raw.githubusercontent.com/clarin-eric/monitoring/master/conf.d/templates.conf -O /etc/icinga2/conf.d/templates.conf
-RUN wget https://raw.githubusercontent.com/clarin-eric/monitoring/master/conf.d/user-groups.conf -O /etc/icinga2/conf.d/user-groups.conf
+RUN touch /etc/icinga2/constants.conf
 
 ENTRYPOINT ["icinga2", "daemon"]
 CMD [ "-C" ]
