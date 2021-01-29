@@ -21,6 +21,7 @@ sudo: required
 install:
   - pip install -r requirements.txt
   - pip install pycodestyle
+  - sudo docker run --rm -h icinga-master -v icinga-master:/data -e ICINGA_MASTER=1 icinga/icinga2 cat /var/lib/icinga2/certs/ca.crt > icinga-ca.crt
   # - sudo ls -alhF /data/etc/icinga2/
   # - sudo cp -r /data/etc/icinga2/constants.conf /data/etc/icinga2/features-available /data/etc/icinga2/features-enabled /data/etc/icinga2/pki /data/etc/icinga2/zones.d .
   # - sudo rm -r /data/etc/icinga2
