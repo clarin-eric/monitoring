@@ -7,9 +7,6 @@ git:
 services:
   - docker
 
-before_install:
-  - docker pull icinga/icinga2
-
 python:
   - "3.6"
   - "3.7"
@@ -21,6 +18,7 @@ sudo: required
 install:
   - pip install -r requirements.txt
   - pip install pycodestyle
+  - DOCKER_BUILDKIT=1 docker build --rm -f "Dockerfile" -t icinga2-cli "."
   # - sudo docker run --rm -h icinga-master -v icinga-master:/data -e ICINGA_MASTER=1 icinga/icinga2 cat /var/lib/icinga2/certs/ca.crt > icinga-ca.crt
   # - sudo ls -alhF /data/etc/icinga2/
   # - sudo cp -r /data/etc/icinga2/constants.conf /data/etc/icinga2/features-available /data/etc/icinga2/features-enabled /data/etc/icinga2/pki /data/etc/icinga2/zones.d .
@@ -35,4 +33,4 @@ script:
   - find . -name "*.py" -exec pycodestyle {} \;
   - python3 update_config.py --nopull --nosubmodule
   # - sudo docker run --rm -h icinga-master -v icinga-master:/data -e ICINGA_MASTER=1 icinga/icinga2 icinga2 daemon -C -x debug
-  - sudo docker run --rm -h icinga-master -v icinga-master:$(pwd) icinga2 daemon -C -x debug
+  - docker run --rm -v $(pwd):/etc/icinga2/ icinga2-cli
