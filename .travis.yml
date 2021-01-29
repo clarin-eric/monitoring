@@ -21,14 +21,14 @@ sudo: required
 install:
   - pip install -r requirements.txt
   - pip install pycodestyle
-  - sudo ls -alhF /etc/icinga2/
-  - sudo cp -r /etc/icinga2/constants.conf /etc/icinga2/features-available /etc/icinga2/features-enabled /etc/icinga2/pki /etc/icinga2/zones.d .
-  - sudo rm -r /etc/icinga2
-  - sudo ln -s $(pwd) /etc/icinga2
-  - sudo ls -alhF /etc/icinga2/
-  - sudo ls -alhF /etc/icinga2/features-enabled/
-  - sudo ls -alhF /etc/icinga2/pki/
-  - sudo cat /etc/icinga2/constants.conf
+  - sudo ls -alhF /data/etc/icinga2/
+  - sudo cp -r /data/etc/icinga2/constants.conf /data/etc/icinga2/features-available /data/etc/icinga2/features-enabled /data/etc/icinga2/pki /data/etc/icinga2/zones.d .
+  - sudo rm -r /data/etc/icinga2
+  - sudo ln -s $(pwd) /data/etc/icinga2
+  - sudo ls -alhF /data/etc/icinga2/
+  - sudo ls -alhF /data/etc/icinga2/features-enabled/
+  - sudo ls -alhF /data/etc/icinga2/pki/
+  - sudo cat /data/etc/icinga2/constants.conf
 
 script:
  - find . -name "*.py" -exec pycodestyle {} \;
