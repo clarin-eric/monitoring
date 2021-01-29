@@ -5,7 +5,5 @@ RUN apt-get update \
         wget \
         icinga2-bin
 
-RUN touch /etc/icinga2/constants.conf
-
 ENTRYPOINT ["icinga2", "daemon"]
 CMD [ "-C" ]
