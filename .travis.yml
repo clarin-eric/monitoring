@@ -19,7 +19,11 @@ install:
   - pip install -r requirements.txt
   - pip install pycodestyle
   - docker build --rm -f "Dockerfile" -t icinga2-cli "."
-  - echo "const PluginDir = \"/usr/lib/nagios/plugins\"\nconst ManubulonPluginDir = \"/usr/lib/nagios/plugins\"\nconst PluginContribDir = \"/usr/lib/nagios/plugins\"\nconst NodeName = \"clarin-monitoring\"\nconst ZoneName = \"clarin-monitoring\"" > $(pwd)/constants.conf
+  - echo "const PluginDir = \"/usr/lib/nagios/plugins\"" > $(pwd)/constants.conf
+  - echo "const ManubulonPluginDir = \"/usr/lib/nagios/plugins\"" >> $(pwd)/constants.conf
+  - echo "const PluginContribDir = \"/usr/lib/nagios/plugins\"" >> $(pwd)/constants.conf
+  - echo "const NodeName = \"clarin-monitoring\"" >> $(pwd)/constants.conf
+  - echo "const ZoneName = \"clarin-monitoring\"" >> $(pwd)/constants.conf
   - mkdir $(pwd)/features-enabled
   # - sudo docker run --rm -h icinga-master -v icinga-master:/data -e ICINGA_MASTER=1 icinga/icinga2 cat /var/lib/icinga2/certs/ca.crt > icinga-ca.crt
   # - sudo ls -alhF /data/etc/icinga2/
