@@ -4,34 +4,33 @@ language: python
 git:
   submodules: false
 
+services:
+  - docker
+
+before_install:
+  - docker pull icinga/icinga2
+
 python:
   - "3.6"
   - "3.7"
   - "3.8"
+  - "3.9"
 
 sudo: required
 
 install:
-  - echo $DOCKER_USERNAME
-  - curl https://packages.icinga.com/icinga.key | sudo apt-key add -
-  - echo "deb http://packages.icinga.com/ubuntu icinga-bionic main" | sudo tee -a /etc/apt/sources.list
-  - sudo apt-get -qq update
-  - sudo apt-get -y install icinga2 monitoring-plugins
+  - pip install -r requirements.txt
+  - pip install pycodestyle
   - sudo ls -alhF /etc/icinga2/
   - sudo cp -r /etc/icinga2/constants.conf /etc/icinga2/features-available /etc/icinga2/features-enabled /etc/icinga2/pki /etc/icinga2/zones.d .
-  # - sudo chmod -R a+r ./constants.conf ./features-enabled ./features-available
-  # - sudo chmod -R g+w ./constants.conf ./features-enabled ./features-available
-  # - sudo chmod -R a+x ./features-enabled ./features-available
   - sudo rm -r /etc/icinga2
   - sudo ln -s $(pwd) /etc/icinga2
   - sudo ls -alhF /etc/icinga2/
   - sudo ls -alhF /etc/icinga2/features-enabled/
   - sudo ls -alhF /etc/icinga2/pki/
   - sudo cat /etc/icinga2/constants.conf
-  - pip install -r requirements.txt
-  - pip install pycodestyle
 
 script:
-  # - find . -name "*.py" -exec pycodestyle {} \;
-  # - python3 update_config.py --nopull
- - sudo icinga2 daemon -C -x debug
+ - find . -name "*.py" -exec pycodestyle {} \;
+ - python3 update_config.py --nopull --nosubmodule
+ - sudo docker run --rm -h icinga-master -v icinga-master:/data -e ICINGA_MASTER=1 icinga/icinga2 cicinga2 daemon -C -x debug
