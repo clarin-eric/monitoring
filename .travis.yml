@@ -15,6 +15,9 @@ git:
 
 sudo: required
 
+before_install:
+  - openssl aes-256-cbc -K $encrypted_90e588baf452_key -iv $encrypted_90e588baf452_iv -in id_deploykey_clarin-eric_monitoring-users.enc -out ~\/.ssh/id_deploykey_clarin-eric_monitoring-users -d
+
 install:
   - pip install -r requirements.txt
   - pip install pycodestyle
