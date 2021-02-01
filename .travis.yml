@@ -16,7 +16,7 @@ git:
 sudo: required
 
 before_install:
-  - openssl aes-256-cbc -K $encrypted_bda0cbd6e861_key -iv $encrypted_bda0cbd6e861_iv -in id_travis.enc -out ~\/id_travis -d
+  - openssl aes-256-cbc -K $encrypted_bda0cbd6e861_key -iv $encrypted_bda0cbd6e861_iv -in id_travis.enc -out ~/id_travis -d
   # - chmod 600 ~/.ssh/*
   # - eval "$(ssh-agent -s)"
   # - ssh-add ~/.ssh/id_travis
