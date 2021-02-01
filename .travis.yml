@@ -1,4 +1,4 @@
-dist: bionic
+dist: focal
 language: python
 
 services:
@@ -18,6 +18,9 @@ sudo: required
 before_install:
   - openssl aes-256-cbc -K $encrypted_90e588baf452_key -iv $encrypted_90e588baf452_iv -in id_deploykey_clarin-eric_monitoring-users.enc -out ~/.ssh/id_deploykey_clarin-eric_monitoring-users -d
   - openssl aes-256-cbc -K $encrypted_e6f2e885cbca_key -iv $encrypted_e6f2e885cbca_iv -in id_deploykey_clarin-eric_monitoring-dariah.enc -out ~/.ssh/id_deploykey_clarin-eric_monitoring-dariah -d
+  - eval "$(ssh-agent -s)"
+  - ssh-add ~/.ssh/id_deploykey_clarin-eric_monitoring-dariah
+  - ssh-add ~/.ssh/id_deploykey_clarin-eric_monitoring-users
   - git submodule update --init --recursive
 
 install:
