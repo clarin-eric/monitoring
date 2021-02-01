@@ -22,7 +22,7 @@ before_install:
   - eval "$(ssh-agent -s)"
   - ssh-add ~/.ssh/id_deploykey_clarin-eric_monitoring-dariah
   - ssh-add ~/.ssh/id_deploykey_clarin-eric_monitoring-users
-  - git submodule update --init --recursive
+  - git submodule update --init
 
 install:
   - pip install -r requirements.txt
