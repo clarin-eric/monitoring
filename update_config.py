@@ -8,7 +8,6 @@ import requests
 import sys
 
 from argparse import ArgumentParser
-from datetime import datetime
 from git import Repo
 from git.exc import GitCommandError
 from subprocess import Popen, PIPE
@@ -419,7 +418,6 @@ def commit_changes(repo, submodule=True, push=False):
                         logging.debug(f'{submodule.name}: add file to git ' +
                                       f'{f.a_path}.')
                         submodule.module().index.add([f.a_path])
-                now = datetime.now()
                 logging.info(f'{submodule.name}: found changes, commit ' +
                              'changes.')
                 submodule.module().index.commit('Information from Centre ' +
@@ -440,19 +438,18 @@ def commit_changes(repo, submodule=True, push=False):
                 logging.debug(f'Add file to git {f.a_path}.')
                 repo.index.add([f.a_path])
 
-        now = datetime.now()
-        logging.info(f'Found changes, commit changes.')
-        repo.index.commit('Information from Centre Registry updated.')
+        logging.info("Found changes, commit changes.")
+        repo.index.commit("Information from Centre Registry updated.")
 
         if submodule:
             for submodule in repo.submodules:
                 submodule.update()
 
         if push:
-            logging.info(f'Push to origin.')
-            repo.remote('origin').push()
+            logging.info("Push to origin.")
+            repo.remote("origin").push()
     else:
-        logging.info(f'No changes, nothing to commit.')
+        logging.info("No changes, nothing to commit.")
 
 
 def load_hosts(path='./conf.d/hosts/'):

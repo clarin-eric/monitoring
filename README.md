@@ -6,10 +6,10 @@ The main portal for information about CLARIN monitoring is https://trac.clarin.e
 
 ## Workflow
 
-1. After pushing a new revision to the [Git repository]'s, [Travis CI] attempts to build it, i.e. running the `update_config` script.
+1. After pushing a new revision to the [Git repository]'s, [Travis CI] attempts to build it, i.e. running the `update_config` script and checks the resulting icinga2 config.
   * You have to check immediately whether that build succeeds. If your revision results in a failed build, you have fix it straight away.
   * Files in `conf.d/sites` are host for manual edit only.
-2. Every our a cron job on the Server pulls the latest revision and runs the `update_script`, which pushed changes if there are any and restarts icinga with the latest config. The cron job is configured to notify the sysadmins on failure.
+2. Every our a cron job on the Server pulls the latest revision if the Travis build succeeded and runs the `update_script`, which pushed changes if there are any and restarts icinga with the latest config. The cron job is configured to notify the sysadmins on failure.
 
 ## Automated config manipulation using Centre Registry information
 The Python program [`update_config.py`] performs a hourly configuration manipulation, triggered by a cron job on the monitoring host.
@@ -61,7 +61,8 @@ The Python program [`update_config.py`] performs a hourly configuration manipula
    permissions = "application/share/navigation,module/reporting,module/map"
    ```
 4. Add cronjob to regularly update from centre config.
-```@hourly (cd /etc/icinga2 && git pull && git submodule update && git submodule update && /usr/bin/python3 /etc/icinga2/update_config.py --push && systemctl reload icinga2 && sleep 3 && echo "icinga2 status: $(systemctl is-active icinga2)") 2>&1 | mail -s "Cronjob update_config.py" -a "From: monitoring@clarin.eu" MAIL1 MAIL2```
+```@hourly (cd /etc/icinga2 && /usr/bin/python3 /etc/icinga2/update_config.py --travis && git pull && git submodule update && git submodule update && /usr/bin/python3 /etc/icinga2/update_config.py --push && systemctl reload icinga2 && sleep 3 && echo "icinga2 status: $(systemctl is-active icinga2)") 2>&1 | mail -s "Cronjob update_config.py" -a "From: monitoring@clarin.eu" MAIL1 MAIL2```
+
 
 [Travis CI]: https://travis-ci.com/clarin-eric/monitoring
 [Icinga]: https://monitoring.clarin.eu
