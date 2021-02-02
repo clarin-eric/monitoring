@@ -674,9 +674,12 @@ def config_from_centerregistry():
             tech_contact_id = centre['fields']['technical_contact']
             users[ids[tech_contact_id]].groups.append(name)
 
-            if nb_contacts == 0 and (tech_contact_id == None or tech_contact_id == ""):
-                administrative_contact_id = centre['fields']['administrative_contact']
+            administrative_contact_id = centre['fields']['administrative_contact']
+            if nb_contacts == 0 and (tech_contact_id is None or tech_contact_id == ""):
                 users[ids[administrative_contact_id]].groups.append(name)
+            elif ids[administrative_contact_id] in users and \
+                    name in users[ids[administrative_contact_id]].groups:
+                users[ids[administrative_contact_id]].groups.remove(name)
 
             host.address, host.http_uri, host.http_ssl = parse_url(
                 centre['fields']['website_url'].strip())
