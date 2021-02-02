@@ -1,20 +1,39 @@
-dist: bionic
+dist: focal
 language: python
 
-git:
-  submodules: false
+services:
+  - docker
 
 python:
   - "3.6"
   - "3.7"
   - "3.8"
+  - "3.9"
+
+git:
+  submodules: false
 
 sudo: required
+
+before_install:
+  - openssl aes-256-cbc -K $encrypted_bda0cbd6e861_key -iv $encrypted_bda0cbd6e861_iv -in id_travis.enc -out ~/.ssh/id_travis -d
+  - chmod 600 ~/.ssh/*
+  - eval "$(ssh-agent -s)"
+  - ssh-add ~/.ssh/id_travis
+  - git submodule update --init --recursive
 
 install:
   - pip install -r requirements.txt
   - pip install pycodestyle
+  - docker build --rm -f "Dockerfile" -t icinga2-cli "."
+  - echo "const PluginDir = \"/usr/lib/nagios/plugins\"" > $(pwd)/constants.conf
+  - echo "const ManubulonPluginDir = \"/usr/lib/nagios/plugins\"" >> $(pwd)/constants.conf
+  - echo "const PluginContribDir = \"/usr/lib/nagios/plugins\"" >> $(pwd)/constants.conf
+  - echo "const NodeName = \"clarin-monitoring\"" >> $(pwd)/constants.conf
+  - echo "const ZoneName = \"clarin-monitoring\"" >> $(pwd)/constants.conf
+  - mkdir $(pwd)/features-enabled
 
 script:
- - find . -name "*.py" -exec pycodestyle {} \;
- - python3 update_config.py --nopull --nosubmodule
+  - find . -name "*.py" -exec pycodestyle {} \;
+  - python3 update_config.py --nopull --nosubmodule
+  - docker run --rm -v $(pwd):/etc/icinga2/ icinga2-cli

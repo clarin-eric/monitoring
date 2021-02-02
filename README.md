@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/clarin-eric/monitoring.svg?branch=master)](https://travis-ci.org/clarin-eric/monitoring)
+[![Build Status](https://travis-ci.com/clarin-eric/monitoring.svg?branch=master)](https://travis-ci.com/clarin-eric/monitoring)
 
 # Monitoring configuration for networked CLARIN AND DARIAH services and applications.
 
@@ -63,7 +63,7 @@ The Python program [`update_config.py`] performs a hourly configuration manipula
 4. Add cronjob to regularly update from centre config.
 ```@hourly (cd /etc/icinga2 && git pull && git submodule update && git submodule update && /usr/bin/python3 /etc/icinga2/update_config.py --push && systemctl reload icinga2 && sleep 3 && echo "icinga2 status: $(systemctl is-active icinga2)") 2>&1 | mail -s "Cronjob update_config.py" -a "From: monitoring@clarin.eu" MAIL1 MAIL2```
 
-[Travis CI]: https://travis-ci.org/clarin-eric/monitoring
+[Travis CI]: https://travis-ci.com/clarin-eric/monitoring
 [Icinga]: https://monitoring.clarin.eu
 [Centre Registry]: https://centres.clarin.eu
 [Git repository]: https://github.com/clarin-eric/monitoring
