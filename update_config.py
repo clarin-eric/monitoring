@@ -5,16 +5,20 @@ import logging
 import os
 import re
 import requests
+import sys
 
 from argparse import ArgumentParser
 from datetime import datetime
 from git import Repo
 from git.exc import GitCommandError
 from subprocess import Popen, PIPE
+from typing import Tuple
 from urllib.parse import urlparse
 
 
+GIT_URL = "git@github.com:clarin-eric/monitoring.git"
 REGISTRY = {}
+TRAVIS_REPO = "clarin-eric/monitoring"
 
 
 class Config(dict):
@@ -347,7 +351,7 @@ def translit_to_ascii(text):
     return stdoutdata.decode(encoding='utf-8')
 
 
-def git_repo(url, path, pull=True, submodule=True):
+def git_repo(path: str, pull: bool = True, submodule: bool = True) -> Tuple[Repo, bool]:
     """Load our repo from github or, if its there, get the updates.
     If there is a directory under path that is not a git repo, crash.
 
@@ -360,29 +364,38 @@ def git_repo(url, path, pull=True, submodule=True):
         GitPython repo object
     """
     try:
-        logging.info(f'Clone repository {url} to {path}.')
-        repo = Repo.clone_from(url, path)
-    except GitCommandError:
-        logging.info('Repository already exists.')
-        repo = Repo(path)
-        if pull:
-            logging.info(f'Pull changes.')
-            github = repo.remote('origin')
-            github.pull()
-    if submodule:
-        logging.info('Updating submodules.')
-        for submodule in repo.submodules:
-            submodule.update()
-            if submodule.name == "conf.d/sites/dariah":
-                submodule.module().heads.main.checkout()
-            else:
-                submodule.module().heads.master.checkout()
-            submodule.module().remote('origin').pull()
-            submodule.binsha = submodule.module().head.commit.binsha
-            repo.index.add([submodule])
-        if len(repo.index.diff('HEAD')) > 0:
-            repo.index.commit('Update submodules')
-    return repo
+        if is_travis_passed():
+            logging.info("Last Travis build passed.")
+            try:
+                logging.info(f"Clone repository {GIT_URL} to {path}.")
+                repo = Repo.clone_from(GIT_URL, path)
+            except GitCommandError:
+                logging.info("Repository already exists.")
+                repo = Repo(path)
+                if pull:
+                    logging.info("Pull changes.")
+                    github = repo.remote("origin")
+                    github.pull()
+            if submodule:
+                logging.info("Updating submodules.")
+                for submodule in repo.submodules:
+                    submodule.update()
+                    if submodule.name == "conf.d/sites/dariah":
+                        submodule.module().heads.main.checkout()
+                    else:
+                        submodule.module().heads.master.checkout()
+                    submodule.module().remote("origin").pull()
+                    submodule.binsha = submodule.module().head.commit.binsha
+                    repo.index.add([submodule])
+                if len(repo.index.diff("HEAD")) > 0:
+                    repo.index.commit("Update submodules")
+            return repo, True
+        else:
+            logging.info("Last Travis build didn't passed, assume repository exists.")
+            return Repo(path), False
+    except Exception as e:
+        logging.error(f"Error occured while getting changes, {e}")
+        sys.exit(1)
 
 
 def commit_changes(repo, submodule=True, push=False):
@@ -674,9 +687,12 @@ def config_from_centerregistry():
             tech_contact_id = centre['fields']['technical_contact']
             users[ids[tech_contact_id]].groups.append(name)
 
-            if nb_contacts == 0 and (tech_contact_id == None or tech_contact_id == ""):
-                administrative_contact_id = centre['fields']['administrative_contact']
+            administrative_contact_id = centre['fields']['administrative_contact']
+            if nb_contacts == 0 and (tech_contact_id is None or tech_contact_id == ""):
                 users[ids[administrative_contact_id]].groups.append(name)
+            elif ids[administrative_contact_id] in users and \
+                    name in users[ids[administrative_contact_id]].groups:
+                users[ids[administrative_contact_id]].groups.remove(name)
 
             host.address, host.http_uri, host.http_ssl = parse_url(
                 centre['fields']['website_url'].strip())
@@ -833,6 +849,23 @@ def config_from_switchboard_tool_registry(
                       f'code {r.status_code}.')
 
 
+def is_travis_passed() -> bool:
+    """Checks if Travis build passes.
+
+    Returns:
+        True if build passed otherwise false
+    """
+    r = requests.get(
+        f"https://api.travis-ci.com/repos/{TRAVIS_REPO}",
+        headers={"Accept": "application/vnd.travis-ci.2.1+json"}
+    )
+
+    if r.status_code == requests.codes.ok:
+        return r.json()["repo"]["last_build_state"] == "passed"
+    else:
+        r.raise_for_status()
+
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-v', '--verbose', help='Verbose output.',
@@ -847,16 +880,22 @@ if __name__ == '__main__':
                         action='store_false')
     parser.add_argument('--nocommit', help="Don't commit chnages.",
                         action='store_false')
+    parser.add_argument("--travis", help="Check only travis.", action="store_true")
     args = parser.parse_args()
+
+    if args.travis:
+        if is_travis_passed():
+            sys.exit(0)
+        else:
+            sys.exit(1)
 
     if args.verbose:
         logging.basicConfig(format=args.log_format, level=logging.DEBUG)
     else:
         logging.basicConfig(format=args.log_format, level=logging.INFO)
 
-    repo = git_repo('git@github.com:clarin-eric/monitoring.git', '.',
-                    args.nopull, args.nosubmodule)
+    repo, can_push = git_repo('.', args.nopull, args.nosubmodule)
     config_from_centerregistry()
     config_from_switchboard_tool_registry()
     if args.nocommit:
-        commit_changes(repo, args.nosubmodule, args.push)
+        commit_changes(repo, args.nosubmodule, args.push and can_push)
