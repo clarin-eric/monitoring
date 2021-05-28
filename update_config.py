@@ -865,8 +865,9 @@ def is_travis_passed() -> bool:
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('-v', '--verbose', help='Verbose output.',
-                        action='store_true')
+    parser.add_argument(
+        "-v", "--verbose", action="count", default=0, help="Verbose output."
+    )
     parser.add_argument('-f', '--log-format', help='Logging format.',
                         default='%(asctime)s %(levelname)s %(message)s')
     parser.add_argument('--push', help='Push Git repository.',
@@ -886,10 +887,12 @@ if __name__ == '__main__':
         else:
             sys.exit(1)
 
-    if args.verbose:
-        logging.basicConfig(format=args.log_format, level=logging.DEBUG)
-    else:
+    if args.verbose == 0:
+        logging.basicConfig(format=args.log_format, level=logging.WARN)
+    elif args.verbose == 1:
         logging.basicConfig(format=args.log_format, level=logging.INFO)
+    elif args.verbose >= 2:
+        logging.basicConfig(format=args.log_format, level=logging.DEBUG)
 
     repo, can_push = git_repo('.', args.nopull, args.nosubmodule)
     config_from_centerregistry()
