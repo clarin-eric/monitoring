@@ -676,20 +676,37 @@ def config_from_centerregistry():
             else:
                 user_groups[name].display_name = display_name
 
+            contact_to_del = []
+            for k, user in users.items():
+                if k == "clarin@informatik.uni-leipzig.de":
+                    continue
+                if user.groups and name in user.groups:
+                    contact_to_del.append(k)
+
             nb_contacts = 0
             for contact_id in centre['fields']['monitoring_contacts']:
                 users[ids[contact_id]].groups.append(name)
+                if ids[contact_id] in contact_to_del:
+                    contact_to_del.remove(ids[contact_id])
                 nb_contacts += 1
 
             tech_contact_id = centre['fields']['technical_contact']
             users[ids[tech_contact_id]].groups.append(name)
+            if ids[tech_contact_id] in contact_to_del:
+                contact_to_del.remove(ids[tech_contact_id])
 
             administrative_contact_id = centre['fields']['administrative_contact']
             if nb_contacts == 0 and (tech_contact_id is None or tech_contact_id == ""):
                 users[ids[administrative_contact_id]].groups.append(name)
+                if ids[administrative_contact_id] in contact_to_del:
+                    contact_to_del.remove(ids[administrative_contact_id])
             elif ids[administrative_contact_id] in users and \
                     name in users[ids[administrative_contact_id]].groups:
                 users[ids[administrative_contact_id]].groups.remove(name)
+
+            for k in contact_to_del:
+                logging.info(f"Remove {name} group from user {k}.")
+                users[k].groups.remove(name)
 
             host.address, host.http_uri, host.http_ssl = parse_url(
                 centre['fields']['website_url'].strip())
