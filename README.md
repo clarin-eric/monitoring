@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/clarin-eric/monitoring.svg?branch=master)](https://travis-ci.com/clarin-eric/monitoring)
+[![Build Status](https://app.travis-ci.com/clarin-eric/monitoring.svg?branch=master)](https://app.travis-ci.com/clarin-eric/monitoring)
 
 # Monitoring configuration for networked CLARIN AND DARIAH services and applications.
 
