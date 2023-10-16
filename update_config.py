@@ -605,6 +605,9 @@ def save_users(
                 for group in groups_to_del:
                     if group in user.groups:
                         user.groups.remove(group)
+                for g in user.groups:
+                    if g not in groups:
+                        user.groups.remove(g)
                 if len(user.groups) == 0:
                     logging.info(f"Remove user {user.name}.")
                     users_to_del.append(k)
