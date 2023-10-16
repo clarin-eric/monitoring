@@ -23,9 +23,9 @@ TRAVIS_REPO = "clarin-eric/monitoring"
 class Config(dict):
     def __init__(self, name, **kwargs):
         super(Config, self).__init__()
-        self.__dict__['config_names'] = {'_import', 'name', 'vars'}
-        self['name'] = name
-        self['vars'] = {}
+        self.__dict__["config_names"] = {"_import", "name", "vars"}
+        self["name"] = name
+        self["vars"] = {}
         for k, v in kwargs.items():
             self[k] = v
 
@@ -41,28 +41,28 @@ class Config(dict):
         if item in self.config_names:
             return super(Config, self).__contains__(item)
         else:
-            return item in self['vars']
+            return item in self["vars"]
 
     def __delattr__(self, key):
         if key in self.config_names:
             del self[key]
         else:
-            del self['vars'][key]
+            del self["vars"][key]
 
     def __delitem__(self, key):
         if key in self.config_names:
             super(Config, self).__delitem__(key)
         else:
-            del self['vars'][key]
+            del self["vars"][key]
 
     def __getattr__(self, key):
-        if key == '__name__':
+        if key == "__name__":
             return self.__class__.__name__
         else:
             if key in self.config_names:
                 return self[key]
             else:
-                return self['vars'][key]
+                return self["vars"][key]
 
     def __getitem__(self, key):
         if key in self.config_names:
@@ -71,26 +71,26 @@ class Config(dict):
             except KeyError:
                 return None
         else:
-            return self['vars'][key]
+            return self["vars"][key]
 
     def __setattr__(self, key, val):
         if key in self.config_names:
             self[key] = val
         else:
-            self['vars'][key] = val
+            self["vars"][key] = val
 
     def __setitem__(self, key, val):
         if key in self.config_names:
             super(Config, self).__setitem__(key, val)
         else:
-            self['vars'][key] = val
+            self["vars"][key] = val
 
     def __str__(self):
         def escape(v):
             if type(v) == str:
                 return f'"{v}"'
             elif type(v) == int or type(v) == float:
-                return f'{v}'
+                return f"{v}"
             elif type(v) == bool:
                 return f'{"true" if v else "false"}'
             else:
@@ -99,69 +99,74 @@ class Config(dict):
         def to_str(values):
             lines = []
             for k, v in sorted(values.items(), key=lambda i: i[0]):
-                if k == '_import':
+                if k == "_import":
                     lines.append(f'import "{self._import}"\n')
                 elif type(v) == list or type(v) == tuple:
-                    lines.append(
-                        f'{k} = [{", ".join(escape(i) for i in sorted(v))}]\n')
+                    lines.append(f'{k} = [{", ".join(escape(i) for i in sorted(v))}]\n')
                 elif type(v) == dict:
                     indent = True
                     for i, line in enumerate(to_str(v)):
-                        if line.endswith(' = {\n'):
+                        if line.endswith(" = {\n"):
                             if i == 0:
                                 lines.append(f'{k}["{line[:-5]}"] = {{\n')
                             else:
-                                lines.append('}\n')
+                                lines.append("}\n")
                                 lines.append(f'{k}["{line[:-5]}"] = {{\n')
                             indent = False
                         elif i == 0:
-                            lines.append(f'{k} = {{\n')
-                            lines.append(f'    {line}')
-                        elif line == '}\n':
+                            lines.append(f"{k} = {{\n")
+                            lines.append(f"    {line}")
+                        elif line == "}\n":
                             continue
                         elif indent:
-                            lines.append(f'    {line}')
+                            lines.append(f"    {line}")
                         else:
                             lines.append(line)
-                    lines.append('}\n')
+                    lines.append("}\n")
                 elif v is None:
                     continue
                 else:
-                    lines.append(f'{k} = {escape(v)}\n')
+                    lines.append(f"{k} = {escape(v)}\n")
             return lines
 
-        return f'object {self.__name__} "{self.name}" {{\n' + \
-            f'    {"    ".join(to_str(self))}' + \
-            '}'
+        return (
+            f'object {self.__name__} "{self.name}" {{\n'
+            + f'    {"    ".join(to_str(self))}'
+            + "}"
+        )
 
     def items(self):
         for k, v in super(Config, self).items():
-            if k == 'name':
+            if k == "name":
                 continue
-            elif k == 'vars':
+            elif k == "vars":
                 for k2, v2 in v.items():
-                    yield f'{k}.{k2}', v2
+                    yield f"{k}.{k2}", v2
             else:
                 yield k, v
 
     @classmethod
     def from_str(cls, s):
-        obj_pattern = r'object\s+(?P<obj>[^\s]+)\s+"(?P<name>[^"]+)"\s*{' + \
-            r'(?P<body>((?!object\s+[^\s]+\s+").)*)}'
-        prop_pattern = r'^\s*(import\s+"(?P<import>[^"]+)"|' + \
-            r'(vars\.)?(?P<list>[^\s=]+\s*=\s*\[([^\]]*)\]$)|' + \
-            r'(vars\.)?(?P<dict>[^\s=]+(\[[^\]]+\])?\s*=\s*\{([^\}]+)\}$)|' + \
-            r'(vars\.)?(?P<prop>[^\s=]+\s*=\s*(.+))$)'
-        kv_pattern = r'(?P<k>[^\s=]+)\s*=\s*(?P<v>.+)$'
+        obj_pattern = (
+            r'object\s+(?P<obj>[^\s]+)\s+"(?P<name>[^"]+)"\s*{'
+            + r'(?P<body>((?!object\s+[^\s]+\s+").)*)}'
+        )
+        prop_pattern = (
+            r'^\s*(import\s+"(?P<import>[^"]+)"|'
+            + r"(vars\.)?(?P<list>[^\s=]+\s*=\s*\[([^\]]*)\]$)|"
+            + r"(vars\.)?(?P<dict>[^\s=]+(\[[^\]]+\])?\s*=\s*\{([^\}]+)\}$)|"
+            + r"(vars\.)?(?P<prop>[^\s=]+\s*=\s*(.+))$)"
+        )
+        kv_pattern = r"(?P<k>[^\s=]+)\s*=\s*(?P<v>.+)$"
 
         def unescape(v):
-            if v == 'true':
+            if v == "true":
                 return True
-            elif v == 'false':
+            elif v == "false":
                 return False
-            elif re.fullmatch(r'[+-]?[0-9]+', v):
+            elif re.fullmatch(r"[+-]?[0-9]+", v):
                 return int(v)
-            elif re.fullmatch(r'[+-]?[0-9]+\.[0-9]+', v):
+            elif re.fullmatch(r"[+-]?[0-9]+\.[0-9]+", v):
                 return float(v)
             elif v.startswith('"') and v.endswith('"'):
                 return v[1:-1]
@@ -171,43 +176,45 @@ class Config(dict):
         def extract(s):
             values = {}
             for m in re.finditer(prop_pattern, s, flags=re.M):
-                if m.group('import'):
-                    values['_import'] = m.group('import')
-                elif m.group('list'):
-                    m2 = re.search(r'(?P<k>[^\s=]+)\s*=\s*\[(?P<v>[^\]]*)\]',
-                                   m.group('list'))
+                if m.group("import"):
+                    values["_import"] = m.group("import")
+                elif m.group("list"):
+                    m2 = re.search(
+                        r"(?P<k>[^\s=]+)\s*=\s*\[(?P<v>[^\]]*)\]", m.group("list")
+                    )
                     if m2:
-                        values[m2.group('k')] = []
-                        for s in m2.group('v').split(','):
-                            if s == '' or s == '""':
+                        values[m2.group("k")] = []
+                        for s in m2.group("v").split(","):
+                            if s == "" or s == '""':
                                 continue
-                            values[m2.group('k')].append(unescape(s.strip()))
-                elif m.group('dict'):
-                    m2 = re.search(r'(?P<k>[^\s=\]]+)(\["(?P<k2>[^\]]+)"\])?' +
-                                   r'\s*=\s*\{(?P<v>[^\}]+)\}',
-                                   m.group('dict'))
+                            values[m2.group("k")].append(unescape(s.strip()))
+                elif m.group("dict"):
+                    m2 = re.search(
+                        r'(?P<k>[^\s=\]]+)(\["(?P<k2>[^\]]+)"\])?'
+                        + r"\s*=\s*\{(?P<v>[^\}]+)\}",
+                        m.group("dict"),
+                    )
                     if m2:
-                        k = m2.group('k')
-                        if m2.group('k2'):
+                        k = m2.group("k")
+                        if m2.group("k2"):
                             if k not in values:
                                 values[k] = {}
-                            values[k][m2.group('k2')] = \
-                                extract(m2.group('v').strip())
+                            values[k][m2.group("k2")] = extract(m2.group("v").strip())
                         else:
-                            values[k] = extract(m2.group('v').strip())
-                elif m.group('prop'):
-                    m2 = re.search(kv_pattern, m.group('prop'))
+                            values[k] = extract(m2.group("v").strip())
+                elif m.group("prop"):
+                    m2 = re.search(kv_pattern, m.group("prop"))
                     if m2:
-                        values[m2.group('k')] = unescape(m2.group('v').strip())
+                        values[m2.group("k")] = unescape(m2.group("v").strip())
             return values
 
         match = re.search(obj_pattern, s, flags=re.M | re.S)
         if match:
-            name = match.group('name')
-            values = extract(match.group('body'))
+            name = match.group("name")
+            values = extract(match.group("body"))
 
-            if cls.__name__ == 'Config':
-                return eval(match.group('obj'))(name, **values)
+            if cls.__name__ == "Config":
+                return eval(match.group("obj"))(name, **values)
             else:
                 return cls(name, **values)
         else:
@@ -215,13 +222,15 @@ class Config(dict):
 
     @classmethod
     def load(cls, path):
-        obj_regex = r'object\s+(?P<obj>[^\s]+)\s+"(?P<name>[^"]+)"\s*{' + \
-            r'(?P<body>((?!object\s+[^\s]+\s+").)*)}'
+        obj_regex = (
+            r'object\s+(?P<obj>[^\s]+)\s+"(?P<name>[^"]+)"\s*{'
+            + r'(?P<body>((?!object\s+[^\s]+\s+").)*)}'
+        )
 
         objs = []
-        with open(path, 'r', encoding='utf8') as f:
+        with open(path, "r", encoding="utf8") as f:
             for m in re.finditer(obj_regex, f.read(), flags=re.M | re.S):
-                if cls.__name__ != 'Config' and cls.__name__ != m.group('obj'):
+                if cls.__name__ != "Config" and cls.__name__ != m.group("obj"):
                     continue
                 objs.append(cls.from_str(m.group().strip()))
         if len(objs) == 0:
@@ -233,49 +242,69 @@ class Config(dict):
 
     def save(self, path, *args):
         if os.path.isdir(path):
-            path = os.path.join(path, f'{self.name}.conf')
-        with open(path, 'w', encoding='utf8') as f:
-            f.write(f'{self}\n')
+            path = os.path.join(path, f"{self.name}.conf")
+        with open(path, "w", encoding="utf8") as f:
+            f.write(f"{self}\n")
 
             for arg in args:
-                f.write(f'\n{arg}\n')
+                f.write(f"\n{arg}\n")
 
 
 class Host(Config):
     def __init__(self, name, **kwargs):
         super(Host, self).__init__(name)
-        self.config_names.update(['display_name', 'address', 'address6',
-                                  'groups', 'vars', 'check_command',
-                                  'max_check_attempts', 'check_period',
-                                  'check_timeout', 'check_interval',
-                                  'retry_interval', 'enable_notifications',
-                                  'enable_active_checks', 'icon_image_alt',
-                                  'enable_passive_checks', 'icon_image',
-                                  'enable_event_handler', 'enable_flapping',
-                                  'enable_perfdata', 'event_command',
-                                  'flapping_threshold_high', 'action_url',
-                                  'flapping_threshold_low', 'volatile', 'zone',
-                                  'command_endpoint', 'notes', 'notes_url'])
+        self.config_names.update(
+            [
+                "display_name",
+                "address",
+                "address6",
+                "groups",
+                "vars",
+                "check_command",
+                "max_check_attempts",
+                "check_period",
+                "check_timeout",
+                "check_interval",
+                "retry_interval",
+                "enable_notifications",
+                "enable_active_checks",
+                "icon_image_alt",
+                "enable_passive_checks",
+                "icon_image",
+                "enable_event_handler",
+                "enable_flapping",
+                "enable_perfdata",
+                "event_command",
+                "flapping_threshold_high",
+                "action_url",
+                "flapping_threshold_low",
+                "volatile",
+                "zone",
+                "command_endpoint",
+                "notes",
+                "notes_url",
+            ]
+        )
         for k, v in kwargs.items():
             self[k] = v
 
     def add_ssl_cert(self, dns):
-        lets_encrypt = ['SADiLaR']
-        if 'ssl_certs' not in self:
+        lets_encrypt = ["SADiLaR"]
+        if "ssl_certs" not in self:
             self.ssl_certs = {}
         self.ssl_certs[dns] = {
-            'ssl_cert_address': dns,
-            'ssl_cert_cn': dns,
-            'ssl_cert_altnames': True,
-            'ssl_cert_warn': 3 if self.name in lets_encrypt else 10,
-            'ssl_cert_critical': 1 if self.name in lets_encrypt else 7
+            "ssl_cert_address": dns,
+            "ssl_cert_cn": dns,
+            "ssl_cert_altnames": True,
+            "ssl_cert_warn": 3 if self.name in lets_encrypt else 10,
+            "ssl_cert_critical": 1 if self.name in lets_encrypt else 7,
         }
 
 
 class HostGroup(Config):
     def __init__(self, name, **kwargs):
         super(HostGroup, self).__init__(name)
-        self.config_names.update(['display_name', 'groups'])
+        self.config_names.update(["display_name", "groups"])
         for k, v in kwargs.items():
             self[k] = v
 
@@ -283,9 +312,19 @@ class HostGroup(Config):
 class User(Config):
     def __init__(self, name, **kwargs):
         super(User, self).__init__(name)
-        self.config_names.update(['display_name', 'email', 'pager', 'vars',
-                                  'groups', 'enable_notifications', 'period',
-                                  'types', 'states'])
+        self.config_names.update(
+            [
+                "display_name",
+                "email",
+                "pager",
+                "vars",
+                "groups",
+                "enable_notifications",
+                "period",
+                "types",
+                "states",
+            ]
+        )
         for k, v in kwargs.items():
             self[k] = v
 
@@ -293,7 +332,7 @@ class User(Config):
 class UserGroup(Config):
     def __init__(self, name, **kwargs):
         super(UserGroup, self).__init__(name)
-        self.config_names.update(['display_name', 'groups'])
+        self.config_names.update(["display_name", "groups"])
         for k, v in kwargs.items():
             self[k] = v
 
@@ -307,13 +346,15 @@ def fetch_centre_registry(key):
     Return:
         boolean indicating success
     """
-    r = requests.get(f'https://centres.clarin.eu/api/model/{key:s}')
+    r = requests.get(f"https://centres.clarin.eu/api/model/{key:s}")
     if r.status_code == requests.codes.ok:
         REGISTRY[key] = r.json()
         return True
     else:
-        logging.error('Error fetching https://centres.clarin.eu/api/model/' +
-                      f'{key:s}, status code: {r.status_code}.')
+        logging.error(
+            "Error fetching https://centres.clarin.eu/api/model/"
+            + f"{key:s}, status code: {r.status_code}."
+        )
         return False
 
 
@@ -327,12 +368,14 @@ def parse_url(url):
         address, uri, ssl (boolean)
     """
     parsed_url = urlparse(url)
-    components = parsed_url.netloc.split(':')
+    components = parsed_url.netloc.split(":")
 
     address = components[0]
-    uri = f'{parsed_url.path}{parsed_url.params}{parsed_url.query}' + \
-        f'{parsed_url.fragment}'
-    return address, '/' if uri == '' else uri, parsed_url.scheme == 'https'
+    uri = (
+        f"{parsed_url.path}{parsed_url.params}{parsed_url.query}"
+        + f"{parsed_url.fragment}"
+    )
+    return address, "/" if uri == "" else uri, parsed_url.scheme == "https"
 
 
 def translit_to_ascii(text):
@@ -344,10 +387,11 @@ def translit_to_ascii(text):
     Return:
         transliterated text
     """
-    process = Popen(['iconv', '-f', 'utf-8', '-t' 'ascii//TRANSLIT'],
-                    stdout=PIPE, stdin=PIPE)
-    stdoutdata, _ = process.communicate(text.encode('utf-8'))
-    return stdoutdata.decode(encoding='utf-8')
+    process = Popen(
+        ["iconv", "-f", "utf-8", "-t" "ascii//TRANSLIT"], stdout=PIPE, stdin=PIPE
+    )
+    stdoutdata, _ = process.communicate(text.encode("utf-8"))
+    return stdoutdata.decode(encoding="utf-8")
 
 
 def git_repo(path: str, pull: bool = True, submodule: bool = True) -> Tuple[Repo, bool]:
@@ -407,35 +451,34 @@ def commit_changes(repo, submodule=True, push=False):
     if submodule:
         for submodule in repo.submodules:
             if submodule.module().is_dirty(untracked_files=True):
-                submodule.module().index.add(
-                    submodule.module().untracked_files)
+                submodule.module().index.add(submodule.module().untracked_files)
                 for f in submodule.module().index.diff(None):
-                    if f.change_type == 'D':
-                        logging.debug(f'{submodule.name}: remove file from ' +
-                                      f'git {f.a_path}.')
+                    if f.change_type == "D":
+                        logging.debug(
+                            f"{submodule.name}: remove file from git {f.a_path}."
+                        )
                         submodule.module().index.remove([f.a_path])
                     else:
-                        logging.debug(f'{submodule.name}: add file to git ' +
-                                      f'{f.a_path}.')
+                        logging.debug(f"{submodule.name}: add file to git {f.a_path}.")
                         submodule.module().index.add([f.a_path])
-                logging.info(f'{submodule.name}: found changes, commit ' +
-                             'changes.')
-                submodule.module().index.commit('Information from Centre ' +
-                                                'Registry updated.')
+                logging.info(f"{submodule.name}: found changes, commit changes.")
+                submodule.module().index.commit(
+                    "Information from Centre Registry updated."
+                )
                 submodule.binsha = submodule.module().head.commit.binsha
                 repo.index.add([submodule])
                 if push:
-                    logging.info(f'{submodule.name}: push to origin.')
-                    submodule.module().remote('origin').push()
+                    logging.info(f"{submodule.name}: push to origin.")
+                    submodule.module().remote("origin").push()
 
     if repo.is_dirty(untracked_files=True):
         repo.index.add(repo.untracked_files)
         for f in repo.index.diff(None):
-            if f.change_type == 'D':
-                logging.debug(f'Remove file from git {f.a_path}.')
+            if f.change_type == "D":
+                logging.debug(f"Remove file from git {f.a_path}.")
                 repo.index.remove([f.a_path])
             else:
-                logging.debug(f'Add file to git {f.a_path}.')
+                logging.debug(f"Add file to git {f.a_path}.")
                 repo.index.add([f.a_path])
 
         logging.info("Found changes, commit changes.")
@@ -452,7 +495,7 @@ def commit_changes(repo, submodule=True, push=False):
         logging.info("No changes, nothing to commit.")
 
 
-def load_hosts(path='./conf.d/hosts/'):
+def load_hosts(path="./conf.d/hosts/"):
     """Load hosts and host groups from config.
 
     Args:
@@ -461,25 +504,26 @@ def load_hosts(path='./conf.d/hosts/'):
     Return:
         dict of hosts, dict of host groups
     """
-    logging.info(f'Load exinting host configs from {path}.')
+    logging.info(f"Load exinting host configs from {path}.")
     hosts = {}
     host_groups = {}
     with os.scandir(path) as it:
         for entry in it:
-            if entry.name.endswith('.conf') and entry.is_file():
+            if entry.name.endswith(".conf") and entry.is_file():
                 for cfg in Config.load(entry.path):
                     if type(cfg) == Host:
                         hosts[cfg.name] = cfg
                     elif type(cfg) == HostGroup:
                         host_groups[cfg.name] = cfg
-    logging.info(f'Found {len(hosts)} hosts and {len(host_groups)} host ' +
-                 'groups.')
+    logging.info(f"Found {len(hosts)} hosts and {len(host_groups)} host groups.")
     return hosts, host_groups
 
 
-def load_users(users_path='./conf.d/users.conf',
-               user_groups_path='./conf.d/user-groups.conf',
-               users_submodule_path='./conf.d/users'):
+def load_users(
+    users_path="./conf.d/users.conf",
+    user_groups_path="./conf.d/user-groups.conf",
+    users_submodule_path="./conf.d/users",
+):
     """Load users from config.
 
     Args:
@@ -489,7 +533,7 @@ def load_users(users_path='./conf.d/users.conf',
     Return:
         dict of users, dict of user groups
     """
-    logging.info(f'Load exinting users config from {users_path}.')
+    logging.info(f"Load exinting users config from {users_path}.")
     users = {}
     sources = {users_path: []}
     tmp_users = User.load(users_path)
@@ -497,9 +541,9 @@ def load_users(users_path='./conf.d/users.conf',
         for user in tmp_users if isinstance(tmp_users, list) else [tmp_users]:
             users[user.email] = user
             sources[users_path].append(user.email)
-    logging.debug(f'#Users: {len(users)}')
+    logging.debug(f"#Users: {len(users)}")
 
-    logging.info(f'Load exinting user groups config from {user_groups_path}.')
+    logging.info(f"Load exinting user groups config from {user_groups_path}.")
     groups = {group.name: group for group in UserGroup.load(user_groups_path)}
 
     if not os.path.exists(users_submodule_path):
@@ -507,32 +551,38 @@ def load_users(users_path='./conf.d/users.conf',
 
     with os.scandir(users_submodule_path) as it:
         for entry in it:
-            if entry.is_file() and entry.name.endswith('.conf'):
-                logging.info(f'Load exinting users config from {entry.name}.')
+            if entry.is_file() and entry.name.endswith(".conf"):
+                logging.info(f"Load exinting users config from {entry.name}.")
                 k = os.path.join(users_submodule_path, entry.name)
                 if k not in sources:
                     sources[k] = []
 
                 tmp_users = User.load(k)
                 if tmp_users is not None:
-                    for user in tmp_users if isinstance(tmp_users, list) else \
-                            [tmp_users]:
+                    for user in (
+                        tmp_users if isinstance(tmp_users, list) else [tmp_users]
+                    ):
                         if user.email in users:
-                            logging.warning(f'User {user.email} found at ' +
-                                            'least twice.')
+                            logging.warning(f"User {user.email} found at least twice.")
                             if user != users[user.email]:
-                                logging.error(f'User {user.email} config ' +
-                                              'differ, aborting.')
+                                logging.error(
+                                    f"User {user.email} config differ, aborting."
+                                )
                                 sys.exit(1)
                         users[user.email] = user
                         sources[k].append(user.email)
-                logging.debug(f'#Users: {len(users)}')
+                logging.debug(f"#Users: {len(users)}")
 
     return users, groups, sources
 
 
-def save_users(users, groups, sources, groups_to_del=set(),
-               user_groups_path='./conf.d/user-groups.conf'):
+def save_users(
+    users,
+    groups,
+    sources,
+    groups_to_del=set(),
+    user_groups_path="./conf.d/user-groups.conf",
+):
     """Save users and user groups.
 
     Args:
@@ -544,19 +594,19 @@ def save_users(users, groups, sources, groups_to_del=set(),
     """
     for k in groups_to_del:
         if k in groups:
-            logging.info(f'Remove user group {k}.')
+            logging.info(f"Remove user group {k}.")
             del groups[k]
 
     users_to_del = []
     for k, user in users.items():
-        if 'groups' in user:
+        if "groups" in user:
             user.groups = list(set(user.groups))
             if len(user.groups) > 0:
                 for group in groups_to_del:
                     if group in user.groups:
                         user.groups.remove(group)
                 if len(user.groups) == 0:
-                    logging.info(f'Remove user {user.name}.')
+                    logging.info(f"Remove user {user.name}.")
                     users_to_del.append(k)
             else:
                 del user.groups
@@ -565,17 +615,25 @@ def save_users(users, groups, sources, groups_to_del=set(),
 
     groups = [group for group in groups.values()]
     groups[0].save(user_groups_path, *(groups[1:]))
+    prev_sources = []
     for k in sources.keys():
-        logging.info(f'Saving users config to {k}.')
-        tmp = [user for user in users.values() if user.email in sources[k]]
+        logging.info(f"Saving users config to {k}.")
+        tmp = [
+            user
+            for user in users.values()
+            if user.email in sources[k]
+            and not any([user.email in sources[i] for i in prev_sources])
+        ]
         if len(tmp) > 1:
             tmp[0].save(k, *(tmp[1:]))
         elif len(tmp) == 1:
             tmp[0].save(k)
+        prev_sources.append(k)
 
 
-def merge_centerregistry_users(users, user_sources,
-                               users_submodule_path='./conf.d/users'):
+def merge_centerregistry_users(
+    users, user_sources, users_submodule_path="./conf.d/users"
+):
     """Merge icinga users with users from Centre Registry.
 
     Args:
@@ -584,31 +642,31 @@ def merge_centerregistry_users(users, user_sources,
     Return:
         dict with IDs from Centre Registry and icinga user IDs.
     """
-    logging.info('Merge icinga users with Centre Registry users.')
-    source_name = os.path.join(users_submodule_path, 'centre-registry.conf')
+    logging.info("Merge icinga users with Centre Registry users.")
+    source_name = os.path.join(users_submodule_path, "centre-registry.conf")
     if source_name not in user_sources:
         user_sources[source_name] = []
     ids = {}
-    for contact in REGISTRY['Contact']:
-        name = contact['fields']['name']
-        eppn = contact['fields']['edupersonprincipalname']
+    for contact in REGISTRY["Contact"]:
+        name = contact["fields"]["name"]
+        eppn = contact["fields"]["edupersonprincipalname"]
 
         if name is not None and name.strip():
             name = name.strip()
         elif eppn is not None and eppn.strip():
             name = eppn.strip()
         else:
-            name = contact['fields']['email_address'].strip()
-        email = contact['fields']['email_address'].strip()
+            name = contact["fields"]["email_address"].strip()
+        email = contact["fields"]["email_address"].strip()
 
-        telephone_number = contact['fields']['telephone_number'].strip()
-        if telephone_number == '':
+        telephone_number = contact["fields"]["telephone_number"].strip()
+        if telephone_number == "":
             telephone_number = None
-        website_url = contact['fields']['website_url'].strip()
-        if website_url == '':
+        website_url = contact["fields"]["website_url"].strip()
+        if website_url == "":
             website_url = None
 
-        ids[contact['pk']] = email
+        ids[contact["pk"]] = email
         if email in users:
             users[email].display_name = name
             users[email].telephone_number = telephone_number
@@ -617,15 +675,20 @@ def merge_centerregistry_users(users, user_sources,
                 users[email].groups = []
             if email not in user_sources[source_name]:
                 user_sources[source_name].append(email)
-            logging.info(f'Update user {email}.')
+            logging.info(f"Update user {email}.")
             logging.debug(users[email])
         else:
-            users[email] = User(name=email, display_name=name,
-                                _import='generic-user', email=email,
-                                telephone_number=telephone_number,
-                                website_url=website_url, groups=[])
+            users[email] = User(
+                name=email,
+                display_name=name,
+                _import="generic-user",
+                email=email,
+                telephone_number=telephone_number,
+                website_url=website_url,
+                groups=[],
+            )
             user_sources[source_name].append(email)
-            logging.info(f'Create user {email}.')
+            logging.info(f"Create user {email}.")
             logging.debug(users[email])
     return ids
 
@@ -633,46 +696,46 @@ def merge_centerregistry_users(users, user_sources,
 def config_from_centerregistry():
     """Creates config from center registry."""
 
-    logging.info('Generate config form center regestry.')
+    logging.info("Generate config form center regestry.")
 
     users, user_groups, user_sources = load_users()
     hosts, host_groups = load_hosts()
-    if fetch_centre_registry('Centre') and fetch_centre_registry('Contact'):
-        oai_success = fetch_centre_registry('OAIPMHEndpoint')
-        cql_success = fetch_centre_registry('FCSEndpoint')
+    if fetch_centre_registry("Centre") and fetch_centre_registry("Contact"):
+        oai_success = fetch_centre_registry("OAIPMHEndpoint")
+        cql_success = fetch_centre_registry("FCSEndpoint")
         ids = merge_centerregistry_users(users, user_sources)
 
-        for i, centre in enumerate(REGISTRY['Centre']):
+        for i, centre in enumerate(REGISTRY["Centre"]):
             logging.info(f'Centre registry {centre["fields"]["name"].strip()}')
 
-            name = translit_to_ascii(centre['fields']['shorthand'].strip())
-            display_name = centre['fields']['name'].strip()
+            name = translit_to_ascii(centre["fields"]["shorthand"].strip())
+            display_name = centre["fields"]["name"].strip()
 
             if name in hosts:
-                logging.info(f'Update host {name}.')
+                logging.info(f"Update host {name}.")
                 host = hosts[name]
                 host.display_name = display_name
                 del hosts[name]
             else:
-                logging.info(f'Create host {name}.')
-                host = Host(name=name, display_name=display_name,
-                            _import='clarin-generic-host')
+                logging.info(f"Create host {name}.")
+                host = Host(
+                    name=name, display_name=display_name, _import="clarin-generic-host"
+                )
 
             if name in host_groups:
-                logging.info(f'Update host group {name}.')
+                logging.info(f"Update host group {name}.")
                 host_group = host_groups[name]
                 host_group.display_name = display_name
-                if name == 'BAS':
+                if name == "BAS":
                     host.max_check_attempts = 2
                 del host_groups[name]
             else:
-                logging.info(f'Create host group {name}.')
+                logging.info(f"Create host group {name}.")
                 host_group = HostGroup(name=name, display_name=display_name)
-            host.groups = [host_group.name, 'CLARIN']
+            host.groups = [host_group.name, "CLARIN"]
 
             if name not in user_groups:
-                user_groups[name] = UserGroup(name=name,
-                                              display_name=display_name)
+                user_groups[name] = UserGroup(name=name, display_name=display_name)
             else:
                 user_groups[name].display_name = display_name
 
@@ -684,24 +747,26 @@ def config_from_centerregistry():
                     contact_to_del.append(k)
 
             nb_contacts = 0
-            for contact_id in centre['fields']['monitoring_contacts']:
+            for contact_id in centre["fields"]["monitoring_contacts"]:
                 users[ids[contact_id]].groups.append(name)
                 if ids[contact_id] in contact_to_del:
                     contact_to_del.remove(ids[contact_id])
                 nb_contacts += 1
 
-            tech_contact_id = centre['fields']['technical_contact']
+            tech_contact_id = centre["fields"]["technical_contact"]
             users[ids[tech_contact_id]].groups.append(name)
             if ids[tech_contact_id] in contact_to_del:
                 contact_to_del.remove(ids[tech_contact_id])
 
-            administrative_contact_id = centre['fields']['administrative_contact']
+            administrative_contact_id = centre["fields"]["administrative_contact"]
             if nb_contacts == 0 and (tech_contact_id is None or tech_contact_id == ""):
                 users[ids[administrative_contact_id]].groups.append(name)
                 if ids[administrative_contact_id] in contact_to_del:
                     contact_to_del.remove(ids[administrative_contact_id])
-            elif ids[administrative_contact_id] in users and \
-                    name in users[ids[administrative_contact_id]].groups:
+            elif (
+                ids[administrative_contact_id] in users
+                and name in users[ids[administrative_contact_id]].groups
+            ):
                 users[ids[administrative_contact_id]].groups.remove(name)
 
             for k in contact_to_del:
@@ -709,30 +774,35 @@ def config_from_centerregistry():
                 users[k].groups.remove(name)
 
             host.address, host.http_uri, host.http_ssl = parse_url(
-                centre['fields']['website_url'].strip())
+                centre["fields"]["website_url"].strip()
+            )
             host.http_vhost = host.address
             if host.http_ssl:
                 host.add_ssl_cert(host.address)
 
-            host.geolocation = '' + \
-                f'{float(centre["fields"]["latitude"].strip())},' + \
-                f'{float(centre["fields"]["longitude"].strip())}'
+            host.geolocation = (
+                ""
+                + f'{float(centre["fields"]["latitude"].strip())},'
+                + f'{float(centre["fields"]["longitude"].strip())}'
+            )
 
             # OAI
             if oai_success:
                 host.oaipmh_endpoints = {}
-                for item in REGISTRY['OAIPMHEndpoint']:
-                    fields = item['fields']
-                    if fields['centre'] == centre['pk']:
-                        logging.debug(f'Add OAI-PMH endpoint {item["pk"]}: ' +
-                                      f'{fields["uri"]}')
+                for item in REGISTRY["OAIPMHEndpoint"]:
+                    fields = item["fields"]
+                    if fields["centre"] == centre["pk"]:
+                        logging.debug(
+                            f'Add OAI-PMH endpoint {item["pk"]}: ' + f'{fields["uri"]}'
+                        )
                         host.oaipmh_endpoints[f'{item["pk"]}'] = {
-                            'oaipmh_endpoint': fields['uri']
+                            "oaipmh_endpoint": fields["uri"]
                         }
 
-                        if fields['uri'].startswith('https://'):
+                        if fields["uri"].startswith("https://"):
                             http_address, http_uri, http_ssl = parse_url(
-                                fields['uri'].strip())
+                                fields["uri"].strip()
+                            )
                             host.add_ssl_cert(http_address)
                 if host.oaipmh_endpoints == {}:
                     del host.oaipmh_endpoints
@@ -740,127 +810,150 @@ def config_from_centerregistry():
             # CQL
             if cql_success:
                 host.srucql_endpoints = {}
-                for item in REGISTRY['FCSEndpoint']:
-                    fields = item['fields']
-                    if fields['centre'] == centre['pk']:
-                        logging.debug(f'Add SRU/CQL endpoint {item["pk"]}: ' +
-                                      f'{fields["uri"]}')
+                for item in REGISTRY["FCSEndpoint"]:
+                    fields = item["fields"]
+                    if fields["centre"] == centre["pk"]:
+                        logging.debug(
+                            f'Add SRU/CQL endpoint {item["pk"]}: ' + f'{fields["uri"]}'
+                        )
                         host.srucql_endpoints[f'{item["pk"]}'] = {
-                            'srucql_endpoint': fields['uri']
+                            "srucql_endpoint": fields["uri"]
                         }
 
-                        if fields['uri'].startswith('https://'):
+                        if fields["uri"].startswith("https://"):
                             http_address, http_uri, http_ssl = parse_url(
-                                fields['uri'].strip())
+                                fields["uri"].strip()
+                            )
                             host.add_ssl_cert(http_address)
                 if host.srucql_endpoints == {}:
                     del host.srucql_endpoints
 
-            logging.debug(f'Saving {host.name} host config.')
+            logging.debug(f"Saving {host.name} host config.")
             logging.debug(host)
-            host_group.save('./conf.d/hosts', host)
+            host_group.save("./conf.d/hosts", host)
 
         for k in set(list(hosts.keys()) + list(host_groups.keys())):
-            logging.info(f'Remove ./conf.d/hosts/{k}.conf config file.')
-            os.remove(os.path.join('./conf.d/hosts', f'{k}.conf'))
+            logging.info(f"Remove ./conf.d/hosts/{k}.conf config file.")
+            os.remove(os.path.join("./conf.d/hosts", f"{k}.conf"))
 
-        save_users(users, user_groups, user_sources,
-                   set(list(hosts.keys()) + list(host_groups.keys())))
+        save_users(
+            users,
+            user_groups,
+            user_sources,
+            set(list(hosts.keys()) + list(host_groups.keys())),
+        )
 
 
-def config_from_switchboard_tool_registry(
-        users_submodule_path='./conf.d/users'):
+def config_from_switchboard_tool_registry(users_submodule_path="./conf.d/users"):
     """Creates config from switchboard-tool-registry repo."""
-    logging.info('Generate config form switchboard-tool-registry repo.')
+    logging.info("Generate config form switchboard-tool-registry repo.")
 
     users, user_groups, user_sources = load_users()
-    clarin_source_name = os.path.join(users_submodule_path,
-                                      'centre-registry.conf')
-    switchboard_source_name = os.path.join(users_submodule_path,
-                                           'switchboard-tool-registry.conf')
+    clarin_source_name = os.path.join(users_submodule_path, "centre-registry.conf")
+    switchboard_source_name = os.path.join(
+        users_submodule_path, "switchboard-tool-registry.conf"
+    )
     if switchboard_source_name not in user_sources:
         user_sources[switchboard_source_name] = []
     switchboard_users = set()
 
-    logging.info('Create host group Switchboard Tool Registry.')
-    host_group = HostGroup(name='switchboard-tool-registry',
-                           display_name='Switchboard Tool Registry')
+    logging.info("Create host group Switchboard Tool Registry.")
+    host_group = HostGroup(
+        name="switchboard-tool-registry", display_name="Switchboard Tool Registry"
+    )
     hosts = []
 
-    r = requests.get('https://switchboard.clarin.eu/api/tools/')
+    r = requests.get("https://switchboard.clarin.eu/api/tools/")
     if r.status_code == requests.codes.ok:
         for tool in r.json():
-            name = translit_to_ascii(tool['name'].strip())
+            name = translit_to_ascii(tool["name"].strip())
 
-            logging.info(f'Switchboard Tool Registry {name}')
-            logging.info(f'Create host {name}.')
-            host = Host(name=name, _import='clarin-generic-host',
-                        groups=[host_group.name, 'CLARIN'])
-            host.address, host.http_uri, host.http_ssl = \
-                parse_url(tool['homepage'].strip())
+            logging.info(f"Switchboard Tool Registry {name}")
+            logging.info(f"Create host {name}.")
+            host = Host(
+                name=name,
+                _import="clarin-generic-host",
+                groups=[host_group.name, "CLARIN"],
+            )
+            host.address, host.http_uri, host.http_ssl = parse_url(
+                tool["homepage"].strip()
+            )
 
             if host.http_ssl:
                 host.add_ssl_cert(host.address)
 
-            http_address, http_uri, http_ssl = \
-                parse_url(tool['webApplication']['url'].strip())
-            host.http_vhosts = {name: {
-                'http_address': http_address,
-                'http_vhost': http_address,
-                'http_uri': http_uri,
-                'http_ssl': http_ssl
-            }}
-            if 'authentication' in tool and tool['authentication'] and \
-                    tool['authentication'].startswith('Yes.') \
-                    and http_address != 'webservices-lst.science.ru.nl':
-                host.http_vhosts[tool['name']]['http_expect'] = '401 UNAUTHORIZED'
+            http_address, http_uri, http_ssl = parse_url(
+                tool["webApplication"]["url"].strip()
+            )
+            host.http_vhosts = {
+                name: {
+                    "http_address": http_address,
+                    "http_vhost": http_address,
+                    "http_uri": http_uri,
+                    "http_ssl": http_ssl,
+                }
+            }
+            if (
+                "authentication" in tool
+                and tool["authentication"]
+                and tool["authentication"].startswith("Yes.")
+                and http_address != "webservices-lst.science.ru.nl"
+            ):
+                host.http_vhosts[tool["name"]]["http_expect"] = "401 UNAUTHORIZED"
             if http_ssl:
                 host.add_ssl_cert(http_address)
 
-            email = tool['contact']['email']
-            name = tool['contact']['person']
+            email = tool["contact"]["email"]
+            name = tool["contact"]["person"]
             switchboard_users.add(email)
             if email not in users:
-                logging.info(f'Create user {email}.')
-                users[email] = User(name=email, display_name=name,
-                                    _import='generic-user', email=email,
-                                    groups=[host_group.name])
+                logging.info(f"Create user {email}.")
+                users[email] = User(
+                    name=email,
+                    display_name=name,
+                    _import="generic-user",
+                    email=email,
+                    groups=[host_group.name],
+                )
                 user_sources[switchboard_source_name].append(email)
             else:
-                logging.info(f'Update user {email}.')
+                logging.info(f"Update user {email}.")
                 users[email].display_name = name
-                if 'groups' in users[email]:
+                if "groups" in users[email]:
                     if host_group.name not in users[email].groups:
                         users[email].groups.append(host_group.name)
                 else:
                     users[email].groups = [host_group.name]
-                if email not in user_sources[switchboard_source_name] and \
-                        email not in user_sources[clarin_source_name]:
+                if (
+                    email not in user_sources[switchboard_source_name]
+                    and email not in user_sources[clarin_source_name]
+                ):
                     user_sources[switchboard_source_name].append(email)
-            host.notification = {'mail': {'users': [email]}}
+            host.notification = {"mail": {"users": [email]}}
 
             logging.debug(users[email])
             logging.debug(host)
             hosts.append(host)
 
-        logging.info('Saving switchboard tool registry host configs.')
-        host_group.save('./conf.d/', *sorted(hosts, key=lambda x: x.name))
+        logging.info("Saving switchboard tool registry host configs.")
+        host_group.save("./conf.d/", *sorted(hosts, key=lambda x: x.name))
 
         to_del = []
         for k in users.keys():
-            if 'groups' in users[k] and host_group.name in users[k].groups:
-                if users[k].name not in switchboard_users:
+            if "groups" in users[k] and host_group.name in users[k].groups:
+                if k not in switchboard_users:
                     if len(users[k].groups) == 1:
                         to_del.append(k)
                     else:
                         users[k].groups.remove(host_group.name)
         for k in to_del:
-            logging.info(f'Remove user {users[k].name}.')
+            logging.info(f"Remove user {users[k].name}.")
             del users[k]
         save_users(users, user_groups, user_sources)
     else:
-        logging.error('Error while fetching switchboard api, status ' +
-                      f'code {r.status_code}.')
+        logging.error(
+            f"Error while fetching switchboard api, status code {r.status_code}."
+        )
 
 
 def is_travis_passed() -> bool:
@@ -871,7 +964,7 @@ def is_travis_passed() -> bool:
     """
     r = requests.get(
         f"https://api.travis-ci.com/repos/{TRAVIS_REPO}",
-        headers={"Accept": "application/vnd.travis-ci.2.1+json"}
+        headers={"Accept": "application/vnd.travis-ci.2.1+json"},
     )
 
     if r.status_code == requests.codes.ok:
@@ -880,21 +973,27 @@ def is_travis_passed() -> bool:
         r.raise_for_status()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument(
         "-v", "--verbose", action="count", default=0, help="Verbose output."
     )
-    parser.add_argument('-f', '--log-format', help='Logging format.',
-                        default='%(asctime)s %(levelname)s %(message)s')
-    parser.add_argument('--push', help='Push Git repository.',
-                        action='store_true')
-    parser.add_argument('--nopull', help="Don't pull Git repository.",
-                        action='store_false')
-    parser.add_argument('--nosubmodule', help="Ignore submodules.",
-                        action='store_false')
-    parser.add_argument('--nocommit', help="Don't commit chnages.",
-                        action='store_false')
+    parser.add_argument(
+        "-f",
+        "--log-format",
+        help="Logging format.",
+        default="%(asctime)s %(levelname)s %(message)s",
+    )
+    parser.add_argument("--push", help="Push Git repository.", action="store_true")
+    parser.add_argument(
+        "--nopull", help="Don't pull Git repository.", action="store_false"
+    )
+    parser.add_argument(
+        "--nosubmodule", help="Ignore submodules.", action="store_false"
+    )
+    parser.add_argument(
+        "--nocommit", help="Don't commit chnages.", action="store_false"
+    )
     parser.add_argument("--travis", help="Check only travis.", action="store_true")
     args = parser.parse_args()
 
@@ -911,7 +1010,7 @@ if __name__ == '__main__':
     elif args.verbose >= 2:
         logging.basicConfig(format=args.log_format, level=logging.DEBUG)
 
-    repo, can_push = git_repo('.', args.nopull, args.nosubmodule)
+    repo, can_push = git_repo(".", args.nopull, args.nosubmodule)
     config_from_centerregistry()
     config_from_switchboard_tool_registry()
     if args.nocommit:
