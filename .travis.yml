@@ -36,3 +36,10 @@ script:
   - find . -name "*.py" -exec pycodestyle {} \;
   - python3 update_config.py --nopull --nosubmodule
   - docker run --rm -v $(pwd):/etc/icinga2/ icinga2-cli
+
+notifications:  
+  email:  
+    recipients:  
+    - bernd.schloer@gwdg.de  
+    on_success: always  
+    on_failure: always
