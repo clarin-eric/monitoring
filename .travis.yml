@@ -41,5 +41,6 @@ notifications:
   email:  
     recipients:  
     - bernd.schloer@gwdg.de  
+    - sysops@clarin.eu
     on_success: always  
     on_failure: always
