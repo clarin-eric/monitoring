@@ -774,7 +774,8 @@ def config_from_centerregistry():
 
             for k in contact_to_del:
                 logging.info(f"Remove {name} group from user {k}.")
-                users[k].groups.remove(name)
+                if name in users[k].groups:
+                    users[k].groups.remove(name)
 
             host.address, host.http_uri, host.http_ssl = parse_url(
                 centre["fields"]["website_url"].strip()
