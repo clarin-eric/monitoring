@@ -2,3 +2,7 @@
 	path = conf.d/users
 	url = git@github.com:clarin-eric/monitoring-users.git
 	branch = master
+[submodule "conf.d/sites/dariah"]
+	path = conf.d/sites/dariah
+	url = git@github.com:clarin-eric/monitoring-dariah.git
+	branch = main
