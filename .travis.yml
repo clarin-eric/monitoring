@@ -19,7 +19,7 @@ before_install:
   - chmod 600 ~/.ssh/*
   - eval "$(ssh-agent -s)"
   - ssh-add ~/.ssh/id_travis
-  - git submodule update --init conf.d/users --init
+  - git submodule update --init conf.d/users
 
 install:
   - pip install -r requirements.txt
