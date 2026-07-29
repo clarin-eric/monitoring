@@ -1,0 +1,78 @@
+name: CI Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+
+    steps:
+    # Step 1: Check out the repository
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Step 2: Set up the specific Python version for the matrix job
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # Step 3: Set up SSH Agent using GitHub Secrets (Replaces openssl decryption)
+    - name: Install SSH Key
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    # Step 4: Run the rest of the 'before_install' phase
+    - name: Update submodules
+      run: |
+        git submodule update --init conf.d/users
+
+    # Step 5: Install dependencies and build Docker image
+    - name: Install dependencies & Build
+      run: |
+        pip install -r requirements.txt
+        pip install pycodestyle
+        docker build --rm -f "Dockerfile" -t icinga2-cli "."
+        echo "const PluginDir = \"/usr/lib/nagios/plugins\"" > $(pwd)/constants.conf
+        echo "const ManubulonPluginDir = \"/usr/lib/nagios/plugins\"" >> $(pwd)/constants.conf
+        echo "const PluginContribDir = \"/usr/lib/nagios/plugins\"" >> $(pwd)/constants.conf
+        echo "const NodeName = \"clarin-monitoring\"" >> $(pwd)/constants.conf
+        echo "const ZoneName = \"clarin-monitoring\"" >> $(pwd)/constants.conf
+        mkdir -p $(pwd)/features-enabled
+
+    # Step 6: Execute testing scripts
+    - name: Run Tests
+      run: |
+        find . -name "*.py" -exec pycodestyle {} \;
+        python3 update_config.py --nopull --nosubmodule
+        docker run --rm -v $(pwd):/etc/icinga2/ icinga2-cli
+
+#
+#Disabled email notifications, for now rely on github CI notifications
+#
+#    # Step 7: Send Email Notifications (Runs always, regardless of success/failure)
+#    - name: Send Email Notification
+#      if: always()
+#      uses: dawidd6/action-send-mail@v3
+#      with:
+#        # You will need to set up an SMTP server secret for this to work
+#        server_address: ${{ secrets.SMTP_SERVER }}
+#        server_port: 465
+#        username: ${{ secrets.SMTP_USERNAME }}
+#        password: ${{ secrets.SMTP_PASSWORD }}
+#        subject: GitHub Actions Run ${{ job.status }} - ${{ github.repository }}
+#        to: bernd.schloer@gwdg.de, sysops@clarin.eu
+#        from: GitHub Actions <ci@clarin.eu>
+#        body: |
+#          The build status is: ${{ job.status }}
+#          Repository: ${{ github.repository }}
+#          Commit: ${{ github.sha }}
+#          View logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
