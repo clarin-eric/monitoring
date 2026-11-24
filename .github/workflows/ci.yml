@@ -67,7 +67,7 @@ jobs:
     #Run all tests
     - name: Run Tests
       run: |
-        find . -name "*.py" -exec pycodestyle {} +
+        find . -name "*.py" -exec pycodestyle {} \;
         python3 update_config.py --nopull --nosubmodule
         docker run --rm -v $(pwd):/etc/icinga2/ icinga2-cli
 
