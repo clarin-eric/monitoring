@@ -22,7 +22,7 @@ jobs:
 
     #Setup authentication via install clarin-monitoring github app
     - name: Generate App token for submodules
-      id: submodule-token
+      id: clarin-token #This is what is accessible via steps.clarin-token in the next steps
       uses: actions/create-github-app-token@v3
       with:
         client-id: ${{ vars.APP_CLIENT_ID }}
@@ -34,8 +34,14 @@ jobs:
 
     #Use the short lived token from the previous step to checkout the submodules
     - name: Fetch private submodules
+      env:
+        SUBMODULE_TOKEN: ${{ steps.clarin-token.outputs.token }}
       run: |
-        git config --local http.https://github.com/.extraheader "AUTHORIZATION: basic $(printf 'x-access-token:%s' '${{ steps.clarin-token.outputs.token }}' | base64 -w0)"
+        if [ -z "$SUBMODULE_TOKEN" ]; then
+          echo "Error: SUBMODULE_TOKEN is empty. Check the Generate App token step logs above."
+          exit 1
+        fi
+        git config --global url."https://x-access-token:${SUBMODULE_TOKEN}@github.com/clarin-eric/".insteadOf "https://github.com/clarin-eric/"
         git submodule sync
         git -c protocol.version=2 submodule update --init --force --depth=1
 
